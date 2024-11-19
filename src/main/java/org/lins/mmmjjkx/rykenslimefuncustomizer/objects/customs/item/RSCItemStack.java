@@ -4,7 +4,6 @@ import io.github.thebusybiscuit.slimefun4.libraries.dough.items.CustomItemStack;
 import java.util.List;
 import org.bukkit.inventory.ItemStack;
 
-@SuppressWarnings("deprecation")
 public class RSCItemStack extends CustomItemStack {
     public RSCItemStack(ItemStack item, String name, List<String> lore) {
         super(item, meta -> {

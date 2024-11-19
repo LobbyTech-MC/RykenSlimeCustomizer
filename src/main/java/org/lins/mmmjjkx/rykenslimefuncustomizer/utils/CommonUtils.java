@@ -39,7 +39,7 @@ import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.item.RSCItemStac
 
 public class CommonUtils {
     public static ItemStack doGlow(ItemStack item) {
-        item.addUnsafeEnchantment(Enchantment.LUCK, 1);
+        item.addUnsafeEnchantment(Enchantment.FORTUNE, 1);
         item.addItemFlags(ItemFlag.HIDE_ENCHANTS);
 
         return item;

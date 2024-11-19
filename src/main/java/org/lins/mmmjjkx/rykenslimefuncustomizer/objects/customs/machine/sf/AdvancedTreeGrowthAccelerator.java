@@ -89,7 +89,7 @@ public class AdvancedTreeGrowthAccelerator extends AbstractGrowthAccelerator {
                 inv.consumeItem(slot);
                 sapling.getWorld()
                         .spawnParticle(
-                                Particle.VILLAGER_HAPPY,
+                                Particle.HAPPY_VILLAGER,
                                 sapling.getLocation().add(0.5, 0.5, 0.5),
                                 4,
                                 0.10000000149011612,
@@ -114,7 +114,7 @@ public class AdvancedTreeGrowthAccelerator extends AbstractGrowthAccelerator {
                 inv.consumeItem(slot);
                 block.getWorld()
                         .spawnParticle(
-                                Particle.VILLAGER_HAPPY,
+                                Particle.HAPPY_VILLAGER,
                                 block.getLocation().add(0.5, 0.5, 0.5),
                                 4,
                                 0.10000000149011612,
