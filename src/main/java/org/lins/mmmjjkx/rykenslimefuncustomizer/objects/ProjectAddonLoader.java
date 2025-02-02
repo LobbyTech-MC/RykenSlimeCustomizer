@@ -4,23 +4,26 @@ import io.github.thebusybiscuit.slimefun4.api.researches.Research;
 import io.github.thebusybiscuit.slimefun4.libraries.commons.lang.Validate;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
+import net.bytebuddy.ByteBuddy;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.Nullable;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.ProjectAddonManager;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.RykenSlimefunCustomizer;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.bulit_in.JavaScriptEval;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.listeners.ScriptableEventListener;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.CustomAddonConfig;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.global.RecipeTypeMap;
-import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.global.ScriptableListeners;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.script.ScriptEval;
-import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.script.enhanced.ScriptableListener;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.ItemGroupReader;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.MenuReader;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.RecipeTypesReader;
@@ -94,13 +97,26 @@ public class ProjectAddonLoader {
             }
 
             if (info.contains("pluginDepends")) {
+                Set<String> unloadedPlugins = new HashSet<>();
                 pluginDepends = info.getStringList("pluginDepends");
                 for (String pluginDepend : pluginDepends) {
                     if (!Bukkit.getPluginManager().isPluginEnabled(pluginDepend)) {
-                        ExceptionHandler.handleError("在名称为 " + name + " 的附属(附属id：" + id + ")中需要插件依赖项 " + pluginDepends
-                                + "，由于部分依赖项在加载时出错或未安装，导致此附属无法加载！");
-                        return null;
+                        unloadedPlugins.add(pluginDepend);
                     }
+                }
+
+                if (!unloadedPlugins.isEmpty()) {
+                    StringBuilder message = new StringBuilder("在名称为 " + name + " 的附属(附属id：" + id + ")中需要插件依赖项 ");
+                    for (String pluginDepend : pluginDepends) {
+                        if (unloadedPlugins.contains(pluginDepend)) {
+                            message.append("&c").append(pluginDepend).append("&r ");
+                        } else {
+                            message.append("&a").append(pluginDepend).append("&r ");
+                        }
+                    }
+                    message.append("，由于部分依赖项在加载时出错或未安装，导致此附属无法加载！");
+                    ExceptionHandler.handleError(message.toString());
+                    return null;
                 }
             }
 
@@ -119,8 +135,27 @@ public class ProjectAddonLoader {
                 File file = new File(addon.getScriptsFolder(), scriptListener + ".js");
                 if (file.exists()) {
                     JavaScriptEval eval = new JavaScriptEval(file, addon);
-                    ScriptableListener listener = new ScriptableListener(eval);
-                    ScriptableListeners.addScriptableListener(id, listener);
+
+                    // First letter to uppercase
+                    String listenerName = scriptListener.replaceFirst(
+                            String.valueOf(scriptListener.charAt(0)),
+                            String.valueOf(Character.toUpperCase(scriptListener.charAt(0))));
+
+                    Class<? extends ScriptableEventListener> sel = new ByteBuddy().subclass(ScriptableEventListener.class)
+                            .name("org.rykenslimefuncustomizer.addoncontents.listeners." + listenerName)
+                            .make()
+                            .load(getClass().getClassLoader())
+                            .getLoaded();
+
+                    try {
+                        var listenerObj = (ScriptableEventListener) sel.getConstructors()[0].newInstance(eval);
+                        Bukkit.getPluginManager().registerEvents(listenerObj, RykenSlimefunCustomizer.INSTANCE);
+
+                        addon.setEventListener(listenerObj);
+                        ExceptionHandler.info("成功注册附属 " + addon.getAddonId() + " 的监听脚本 " + file.getName() + "!");
+                    } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                        throw new RuntimeException(e);
+                    }
                 } else {
                     ExceptionHandler.handleWarning(
                             "无法找到附属 " + addon.getAddonId() + " 的对应监听脚本文件 " + file.getName() + "！");
@@ -159,6 +194,15 @@ public class ProjectAddonLoader {
 
                 addon.setConfig(customConfigObj);
                 customConfigObj.tryReload();
+            }
+
+            String idPattern = info.getString("idPattern");
+            if (idPattern != null && !idPattern.isBlank()) {
+                if (idPattern.contains("%0")) {
+                    addon.setIdPattern(idPattern);
+                } else {
+                    ExceptionHandler.handleError("在名称为 " + file.getName() + "的文件夹中有无效的配置: idPattern，idPattern 必须包含 %0（原id）");
+                }
             }
         } else {
             ExceptionHandler.handleError("在名称为 " + file.getName() + "的文件夹中有无效的项目信息，导致此附属无法加载！");
