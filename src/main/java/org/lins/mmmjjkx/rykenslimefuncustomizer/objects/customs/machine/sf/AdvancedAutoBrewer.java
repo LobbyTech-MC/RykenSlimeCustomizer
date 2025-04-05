@@ -125,21 +125,21 @@ public class AdvancedAutoBrewer extends AutoBrewer {
     }
 
     static {
-        potionRecipes.put(Material.SUGAR, PotionType.SPEED);
-        potionRecipes.put(Material.RABBIT_FOOT, PotionType.JUMP);
+        potionRecipes.put(Material.SUGAR, PotionType.SWIFTNESS);
+        potionRecipes.put(Material.RABBIT_FOOT, PotionType.LEAPING);
         potionRecipes.put(Material.BLAZE_POWDER, PotionType.STRENGTH);
-        potionRecipes.put(Material.GLISTERING_MELON_SLICE, PotionType.INSTANT_HEAL);
+        potionRecipes.put(Material.GLISTERING_MELON_SLICE, PotionType.HEALING);
         potionRecipes.put(Material.SPIDER_EYE, PotionType.POISON);
-        potionRecipes.put(Material.GHAST_TEAR, PotionType.REGEN);
+        potionRecipes.put(Material.GHAST_TEAR, PotionType.REGENERATION);
         potionRecipes.put(Material.MAGMA_CREAM, PotionType.FIRE_RESISTANCE);
         potionRecipes.put(Material.PUFFERFISH, PotionType.WATER_BREATHING);
         potionRecipes.put(Material.GOLDEN_CARROT, PotionType.NIGHT_VISION);
         potionRecipes.put(Material.TURTLE_HELMET, PotionType.TURTLE_MASTER);
         potionRecipes.put(Material.PHANTOM_MEMBRANE, PotionType.SLOW_FALLING);
-        fermentations.put(PotionType.SPEED, PotionType.SLOWNESS);
-        fermentations.put(PotionType.JUMP, PotionType.SLOWNESS);
-        fermentations.put(PotionType.INSTANT_HEAL, PotionType.INSTANT_DAMAGE);
-        fermentations.put(PotionType.POISON, PotionType.INSTANT_DAMAGE);
+        fermentations.put(PotionType.SWIFTNESS, PotionType.SLOWNESS);
+        fermentations.put(PotionType.LEAPING, PotionType.SLOWNESS);
+        fermentations.put(PotionType.HEALING, PotionType.HARMING);
+        fermentations.put(PotionType.POISON, PotionType.HARMING);
         fermentations.put(PotionType.NIGHT_VISION, PotionType.INVISIBILITY);
     }
 }
