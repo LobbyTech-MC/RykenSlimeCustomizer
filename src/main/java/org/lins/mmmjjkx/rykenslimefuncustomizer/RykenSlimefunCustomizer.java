@@ -9,11 +9,14 @@ import java.util.Objects;
 import net.byteflux.libby.BukkitLibraryManager;
 import net.byteflux.libby.Library;
 import net.guizhanss.guizhanlibplugin.updater.GuizhanUpdater;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.commands.MainCommand;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.listeners.BlockListener;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.listeners.SingleItemRecipeGuideListener;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.generations.BlockPopulator;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.utils.CommonUtils;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.utils.ExceptionHandler;
 
@@ -28,6 +31,10 @@ public final class RykenSlimefunCustomizer extends JavaPlugin implements Slimefu
         setupLibraries();
         INSTANCE = this;
         System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
+
+        File cache = new File(getDataFolder(), "cache");
+        System.setProperty("XDG_CACHE_HOME", cache.getAbsolutePath());
+        System.setProperty("TRUFFLE_CACHE_DIR", cache.getAbsolutePath());
     }
 
     @Override
@@ -48,6 +55,10 @@ public final class RykenSlimefunCustomizer extends JavaPlugin implements Slimefu
         new BlockListener();
         new SingleItemRecipeGuideListener();
 
+        for (World world : Bukkit.getWorlds()) {
+            world.getPopulators().add(new BlockPopulator());
+        }
+
         ExceptionHandler.info("RykenSlimeCustomizer加载成功！");
 
         if (getConfig().getBoolean("pluginUpdate", false)
@@ -61,6 +72,10 @@ public final class RykenSlimefunCustomizer extends JavaPlugin implements Slimefu
 
     @Override
     public void onDisable() {
+        for (World world : Bukkit.getWorlds()) {
+            world.getPopulators().removeIf(x -> x instanceof BlockPopulator);
+        }
+
         // Plugin shutdown logic
         getLogger().info("RykenSlimeCustomizer已卸载!");
     }
