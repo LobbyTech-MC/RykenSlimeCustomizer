@@ -20,15 +20,15 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
+import net.guizhanss.guizhanlib.minecraft.utils.compatibility.EnchantmentX;
+import net.guizhanss.guizhanlib.minecraft.utils.compatibility.ItemFlagX;
+import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.*;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,7 @@ public class CommonUtils {
             "TURTLE_SCUTE", "SCUTE");
 
     public static ItemStack doGlow(ItemStack item) {
-        item.addUnsafeEnchantment(Enchantment.FORTUNE, 1);
+        item.addUnsafeEnchantment(EnchantmentX.LUCK_OF_THE_SEA, 1);
         item.addItemFlags(ItemFlag.HIDE_ENCHANTS);
 
         return item;
@@ -69,7 +69,7 @@ public class CommonUtils {
 
     @NotNull @Contract("null,_,_ -> new")
     public static ItemStack[] readRecipe(ConfigurationSection section, @NotNull ProjectAddon addon, int size) {
-        if (section == null) return new ItemStack[] {};
+        if (section == null) return new ItemStack[size];
         ItemStack[] itemStacks = new ItemStack[size];
         for (int i = 0; i < size; i++) {
             ConfigurationSection section1 = section.getConfigurationSection(String.valueOf(i + 1));
@@ -79,8 +79,7 @@ public class CommonUtils {
     }
 
     @SneakyThrows
-    @Nullable @SuppressWarnings("deprecation")
-    public static ItemStack readItem(ConfigurationSection section, boolean countable, ProjectAddon addon) {
+    @Nullable public static ItemStack readItem(ConfigurationSection section, boolean countable, ProjectAddon addon) {
         if (section == null) {
             return null;
         }
@@ -113,8 +112,7 @@ public class CommonUtils {
                         hasEnchantment,
                         modelId,
                         amount,
-                        true
-                );
+                        true);
                 if (item != null) {
                     return item;
                 }
@@ -135,8 +133,7 @@ public class CommonUtils {
                     hasEnchantment,
                     modelId,
                     amount,
-                    false
-            );
+                    false);
         }
     }
 
@@ -164,140 +161,191 @@ public class CommonUtils {
             type = "skull_hash";
         }
 
-        ItemStack itemStack;
+        ItemStack itemStack =
+                switch (type.toLowerCase()) {
+                    case "none" -> new ItemStack(Material.AIR, 1);
+                    case "skull_hash" -> {
+                        PlayerSkin playerSkin = PlayerSkin.fromHashCode(material);
+                        ItemStack head = PlayerHead.getItemStack(playerSkin);
 
-        switch (type.toLowerCase()) {
-            case "none" -> {
-                return new ItemStack(Material.AIR, 1);
-            }
-            case "skull_hash" -> {
-                PlayerSkin playerSkin = PlayerSkin.fromHashCode(material);
-                ItemStack head = PlayerHead.getItemStack(playerSkin);
+                        yield new RSCItemStack(head, name, lore);
+                    }
+                    case "skull_base64", "skull" -> {
+                        PlayerSkin playerSkin = PlayerSkin.fromBase64(material);
+                        ItemStack head = PlayerHead.getItemStack(playerSkin);
 
-                itemStack = new RSCItemStack(head, name, lore);
-            }
-            case "skull_base64", "skull" -> {
-                PlayerSkin playerSkin = PlayerSkin.fromBase64(material);
-                ItemStack head = PlayerHead.getItemStack(playerSkin);
+                        yield new RSCItemStack(head, name, lore);
+                    }
+                    case "skull_url" -> {
+                        PlayerSkin playerSkin = PlayerSkin.fromURL(material);
+                        ItemStack head = PlayerHead.getItemStack(playerSkin);
 
-                itemStack = new RSCItemStack(head, name, lore);
-            }
-            case "skull_url" -> {
-                PlayerSkin playerSkin = PlayerSkin.fromURL(material);
-                ItemStack head = PlayerHead.getItemStack(playerSkin);
+                        yield new RSCItemStack(head, name, lore);
+                    }
+                    case "slimefun" -> {
+                        SlimefunItemStack sfis = addon.getPreloadItems().get(material.toUpperCase());
+                        if (sfis != null) {
+                            itemStack = sfis.clone();
+                            itemStack.editMeta(m -> {
+                                if (!name.isBlank()) {
+                                    m.setDisplayName(name);
+                                }
 
-                itemStack = new RSCItemStack(head, name, lore);
-            }
-            case "slimefun" -> {
-                SlimefunItemStack sfis = addon.getPreloadItems().get(material.toUpperCase());
-                if (sfis != null) {
-                    itemStack = sfis.clone();
-                    itemStack.editMeta(m -> {
-                        if (!name.isBlank()) {
-                            m.setDisplayName(name);
-                        }
+                                if (!lore.isEmpty()) {
+                                    m.setLore(lore);
+                                }
+                            });
 
-                        if (!lore.isEmpty()) {
-                            m.setLore(lore);
-                        }
-                    });
+                            yield sfis.clone();
+                        } else {
+                            SlimefunItem sfItem = SlimefunItem.getById(material.toUpperCase());
+                            if (sfItem != null) {
+                                itemStack = sfItem.getItem().clone();
+                                itemStack.editMeta(m -> {
+                                    if (!name.isBlank()) {
+                                        m.setDisplayName(name);
+                                    }
 
-                } else {
-                    SlimefunItem sfItem = SlimefunItem.getById(material.toUpperCase());
-                    if (sfItem != null) {
-                        itemStack = sfItem.getItem().clone();
-                        itemStack.editMeta(m -> {
-                            if (!name.isBlank()) {
-                                m.setDisplayName(name);
+                                    if (!lore.isEmpty()) {
+                                        m.setLore(lore);
+                                    }
+                                });
+
+                                yield itemStack.clone();
+                            } else {
+                                if (isBranch) {
+                                    yield null;
+                                }
+                                ExceptionHandler.handleError("无法找到粘液物品" + material + "，已转为石头");
+                                yield new CustomItemStack(Material.STONE, name, lore);
                             }
-
-                            if (!lore.isEmpty()) {
-                                m.setLore(lore);
-                            }
-                        });
-                    } else {
-                        if (isBranch) {
-                            return null;
                         }
-                        ExceptionHandler.handleError("无法找到粘液物品" + material + "，已转为石头");
-                        itemStack = new CustomItemStack(Material.STONE, name, lore);
                     }
-                }
-            }
-            case "saveditem" -> {
-                File file = new File(addon.getSavedItemsFolder(), material + ".yml");
-                if (!file.exists()) {
-                    if (isBranch) {
-                        return null;
+                    case "saveditem" -> {
+                        File file = new File(addon.getSavedItemsFolder(), material + ".yml");
+                        if (!file.exists()) {
+                            if (isBranch) {
+                                yield null;
+                            }
+                            ExceptionHandler.handleError("保存物品的文件" + material + "不存在，已转为石头");
+                            yield new CustomItemStack(Material.STONE, name, lore);
+                        }
+
+                        String fileContext = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+                        Pattern p = Pattern.compile("v: \\S\\d*");
+
+                        Matcher matcher = p.matcher(fileContext);
+                        if (matcher.find()) {
+                            int s = matcher.start();
+                            int e = matcher.end();
+                            String replace = fileContext.substring(s, e);
+                            int v = Integer.parseInt(replace.replace("v: ", ""));
+
+                            if (v > Bukkit.getUnsafe().getDataVersion()) {
+                                String r2 = replace.replaceFirst(
+                                        String.valueOf(v),
+                                        String.valueOf(Bukkit.getUnsafe().getDataVersion()));
+                                fileContext = fileContext.replace(replace, r2);
+                                Files.writeString(
+                                        file.toPath(),
+                                        fileContext,
+                                        StandardCharsets.UTF_8,
+                                        StandardOpenOption.CREATE,
+                                        StandardOpenOption.TRUNCATE_EXISTING);
+                            }
+                        }
+
+                        YamlConfiguration configuration = YamlConfiguration.loadConfiguration(file);
+
+                        itemStack = new RSCItemStack(
+                                configuration.getItemStack("item", new CustomItemStack(Material.STONE, name, lore)),
+                                name,
+                                lore);
+
+                        itemStack.setAmount(1);
+
+                        yield itemStack;
                     }
-                    ExceptionHandler.handleError("保存物品的文件" + material + "不存在，已转为石头");
-                    itemStack = new CustomItemStack(Material.STONE, name, lore);
-                    break;
-                }
+                        // mc
+                    default -> {
+                        Optional<Material> materialOptional = Optional.ofNullable(Material.matchMaterial(material));
+                        Material mat = Material.STONE;
 
-                String fileContext = Files.readString(file.toPath(), StandardCharsets.UTF_8);
-                Pattern p = Pattern.compile("v: \\S\\d*");
-
-                Matcher matcher = p.matcher(fileContext);
-                if (matcher.find()) {
-                    int s = matcher.start();
-                    int e = matcher.end();
-                    String replace = fileContext.substring(s, e);
-                    int v = Integer.parseInt(replace.replace("v: ", ""));
-
-                    if (v > Bukkit.getUnsafe().getDataVersion()) {
-                        String r2 = replace.replaceFirst(
-                                String.valueOf(v),
-                                String.valueOf(Bukkit.getUnsafe().getDataVersion()));
-                        fileContext = fileContext.replace(replace, r2);
-                        Files.writeString(
-                                file.toPath(),
-                                fileContext,
-                                StandardCharsets.UTF_8,
-                                StandardOpenOption.CREATE,
-                                StandardOpenOption.TRUNCATE_EXISTING);
-                    }
-                }
-
-                YamlConfiguration configuration = YamlConfiguration.loadConfiguration(file);
-
-                itemStack = new RSCItemStack(
-                        configuration.getItemStack("item", new CustomItemStack(Material.STONE, name, lore)),
-                        name,
-                        lore);
-
-                itemStack.setAmount(1);
-            }
-            // mc
-            default -> {
-                Optional<Material> materialOptional = Optional.ofNullable(Material.matchMaterial(material));
-                Material mat = Material.STONE;
-
-                if (materialOptional.isPresent()) {
-                    mat = materialOptional.get();
-                } else if (SlimefunItem.getById(material) == null
-                        && addon.getPreloadItems().get(material) == null) {
-                    if (materialMappings.containsKey(material)) {
-                        materialOptional = Optional.ofNullable(Material.matchMaterial(materialMappings.get(material)));
                         if (materialOptional.isPresent()) {
                             mat = materialOptional.get();
-                            ExceptionHandler.handleWarning("材料" + material + "已自动修复为" + mat);
-                        } else {
-                            if (isBranch) {
-                                return null;
-                            }
-                            ExceptionHandler.handleError("无法在附属" + addon.getAddonId() + "中读取材料" + material + "，已转为石头");
-                        }
-                    } else {
-                        if (isBranch) {
-                            return null;
-                        }
-                        ExceptionHandler.handleError("无法在附属" + addon.getAddonId() + "中读取材料" + material + "，已转为石头");
-                    }
-                }
 
-                itemStack = new CustomItemStack(mat, name, lore);
-            }
+                            ItemStack temp = new ItemStack(mat);
+                            ItemMeta meta = temp.getItemMeta();
+
+                            if (section.contains("color")) {
+                                String color = section.getString("color", "");
+                                String[] parts = color.split(",");
+                                if (parts.length != 3) {
+                                    ExceptionHandler.handleError(
+                                            "在附属" + addon.getAddonId() + "中加载物品时遇到了问题: " + "无法读取物品颜色" + color + "，已忽略");
+                                }
+
+                                Color bkcolor = Color.fromRGB(
+                                        Integer.parseInt(parts[0]),
+                                        Integer.parseInt(parts[1]),
+                                        Integer.parseInt(parts[2]));
+
+                                if (meta instanceof LeatherArmorMeta lam) {
+                                    lam.setColor(bkcolor);
+                                } else if (meta instanceof PotionMeta pm) {
+                                    pm.setColor(bkcolor);
+                                    pm.addItemFlags(ItemFlagX.HIDE_ADDITIONAL_TOOLTIP);
+                                } else if (meta instanceof FireworkEffectMeta fem) {
+                                    fem.setEffect(FireworkEffect.builder()
+                                            .withColor(bkcolor)
+                                            .build());
+                                    fem.addItemFlags(ItemFlagX.HIDE_ADDITIONAL_TOOLTIP);
+                                }
+                            }
+
+                            ItemStack stack = new CustomItemStack(mat, name, lore);
+
+                            meta.setDisplayName(name);
+                            meta.setLore(lore);
+
+                            stack.setItemMeta(meta);
+                            yield stack;
+                        } else if (SlimefunItem.getById(material) == null
+                                && addon.getPreloadItems().get(material) == null) {
+                            if (materialMappings.containsKey(material)) {
+                                materialOptional =
+                                        Optional.ofNullable(Material.matchMaterial(materialMappings.get(material)));
+                                if (materialOptional.isPresent()) {
+                                    mat = materialOptional.get();
+                                    ExceptionHandler.handleWarning("材料" + material + "已自动修复为" + mat);
+                                } else {
+                                    if (isBranch) {
+                                        yield null;
+                                    }
+
+                                    ExceptionHandler.handleError(
+                                            "无法在附属" + addon.getAddonId() + "中读取材料" + material + "，已转为石头");
+                                }
+
+                                yield new CustomItemStack(mat, name, lore);
+                            } else {
+                                if (isBranch) {
+                                    yield null;
+                                }
+
+                                ExceptionHandler.handleError(
+                                        "无法在附属" + addon.getAddonId() + "中读取材料" + material + "，已转为石头");
+
+                                yield new CustomItemStack(Material.STONE, name, lore);
+                            }
+                        }
+
+                        yield new CustomItemStack(mat, name, lore);
+                    }
+                };
+
+        if (itemStack == null) {
+            return null;
         }
 
         ItemMeta meta = itemStack.getItemMeta();
@@ -406,8 +454,7 @@ public class CommonUtils {
             completeFile0(configuration, configuration2);
             configuration2.save(file);
         } catch (Exception e) {
-            e.printStackTrace();
-            ExceptionHandler.handleError("无法完成文件" + resourceFile + "的同步，请检查插件文件是否损坏！");
+            ExceptionHandler.handleError("无法完成文件" + resourceFile + "的同步，请检查插件文件是否损坏！", e);
         }
     }
 
@@ -468,6 +515,7 @@ public class CommonUtils {
                 count++;
             }
         }
+
         ItemStack[] newArray = new ItemStack[count];
 
         int index = 0;

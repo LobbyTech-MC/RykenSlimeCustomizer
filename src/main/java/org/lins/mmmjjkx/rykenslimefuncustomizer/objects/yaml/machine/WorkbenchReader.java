@@ -7,8 +7,10 @@ import io.github.thebusybiscuit.slimefun4.libraries.dough.collections.Pair;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -80,19 +82,16 @@ public class WorkbenchReader extends YamlReader<CustomWorkbench> {
         if (result == ExceptionHandler.HandleResult.FAILED) return null;
 
         String igId = section.getString("item_group");
+
         Pair<ExceptionHandler.HandleResult, ItemGroup> group = ExceptionHandler.handleItemGroupGet(addon, igId);
         if (group.getFirstValue() == ExceptionHandler.HandleResult.FAILED) return null;
 
         SlimefunItemStack slimefunItemStack = getPreloadItem(id);
         if (slimefunItemStack == null) return null;
 
-        ItemStack[] recipe = CommonUtils.readRecipe(section.getConfigurationSection("recipe"), addon);
-        String recipeType = section.getString("recipe_type", "NULL");
-
-        Pair<ExceptionHandler.HandleResult, RecipeType> rt = ExceptionHandler.getRecipeType(
-                "在附属" + addon.getAddonId() + "中加载工作台" + s + "时遇到了问题: " + "错误的配方类型" + recipeType + "!", recipeType);
-
-        if (rt.getFirstValue() == ExceptionHandler.HandleResult.FAILED) return null;
+        Pair<RecipeType, ItemStack[]> recipePair = getRecipe(section, addon);
+        RecipeType rt = recipePair.getFirstValue();
+        ItemStack[] recipe = recipePair.getSecondValue();
 
         CustomMenu menu = CommonUtils.getIf(addon.getMenus(), m -> m.getID().equalsIgnoreCase(id));
         if (menu == null) {
@@ -159,7 +158,7 @@ public class WorkbenchReader extends YamlReader<CustomWorkbench> {
         return new CustomWorkbench(
                 group.getSecondValue(),
                 slimefunItemStack,
-                rt.getSecondValue(),
+                rt,
                 recipe,
                 input.stream().mapToInt(i -> i).toArray(),
                 output.stream().mapToInt(i -> i).toArray(),
@@ -245,6 +244,7 @@ public class WorkbenchReader extends YamlReader<CustomWorkbench> {
             boolean forDisplay = recipes.getBoolean("forDisplay", false);
             boolean hide = recipes.getBoolean("hide", false);
 
+            Set<Integer> noConsumes = new HashSet<>();
             Map<Integer, ItemStack> finalInput = new HashMap<>();
             for (int i = 0; i < inputSize; i++) {
                 ConfigurationSection section1 = inputs.getConfigurationSection(String.valueOf(i + 1));
@@ -271,6 +271,11 @@ public class WorkbenchReader extends YamlReader<CustomWorkbench> {
                 }
 
                 finalInput.put(slot, itemStack);
+
+                boolean noConsume1 = section1.getBoolean("noConsume", false);
+                if (noConsume1) {
+                    noConsumes.add(slot);
+                }
             }
 
             int[] array = new int[freeChances.size()];
@@ -284,7 +289,8 @@ public class WorkbenchReader extends YamlReader<CustomWorkbench> {
                     new LinkedOutput(freeOutput.toArray(new ItemStack[0]), linkedOutput, array, linkedChances),
                     chooseOne,
                     forDisplay,
-                    hide));
+                    hide,
+                    noConsumes));
         }
         return list;
     }

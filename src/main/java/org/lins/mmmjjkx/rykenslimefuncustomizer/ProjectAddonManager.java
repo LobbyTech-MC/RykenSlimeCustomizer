@@ -3,7 +3,6 @@ package org.lins.mmmjjkx.rykenslimefuncustomizer;
 import io.github.thebusybiscuit.slimefun4.libraries.commons.lang.Validate;
 import java.io.File;
 import java.util.*;
-
 import lombok.Getter;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
@@ -97,11 +96,12 @@ public final class ProjectAddonManager {
 
                 ExceptionHandler.handleError("在名称为 " + folder.getName() + "的文件夹中有重复的附属ID，导致此附属无法加载！");
                 skip.add(folder.getName());
-                continue;
+            } else {
+                projectIds.put(id, folder);
             }
-
-            projectIds.put(id, folder);
         }
+
+        checkStupids();
 
         for (File folder : folders) {
             if (skip.contains(folder.getName())) continue;
@@ -125,13 +125,14 @@ public final class ProjectAddonManager {
                 }
                 e.printStackTrace();
             }
-
-            ExceptionHandler.info("已加载的附属列表：");
-            for (ProjectAddon addon : projectAddons.values()) {
-                ExceptionHandler.info(addon.getAddonName() + " (" + addon.getAddonId() + ")" + " 版本号: " + addon.getAddonVersion());
-            }
-            ExceptionHandler.info("共计" + projectAddons.size() + "个附属被加载");
         }
+
+        ExceptionHandler.info("已加载的附属列表：");
+        for (ProjectAddon addon : projectAddons.values()) {
+            ExceptionHandler.info(
+                    addon.getAddonName() + " (" + addon.getAddonId() + ")" + " 版本号: " + addon.getAddonVersion());
+        }
+        ExceptionHandler.info("共计" + projectAddons.size() + "个附属被加载");
     }
 
     public void checkStupids() {
@@ -140,7 +141,8 @@ public final class ProjectAddonManager {
             boolean b = Arrays.stream(Objects.requireNonNull(folder.listFiles()))
                     .anyMatch(f -> f.isFile() && !f.getName().equalsIgnoreCase("config.yml"));
             if (b) {
-                ExceptionHandler.handleWarning("你应当在 \"plugin/RykenSlimefunCustomizer/addons/附属文件夹\" 中存入配置文件，而不是在 \"plugin/RykenSlimefunCustomizer\" 中");
+                ExceptionHandler.handleWarning(
+                        "你应当在 \"plugin/RykenSlimefunCustomizer/addons/附属文件夹\" 中存入配置文件，而不是在 \"plugin/RykenSlimefunCustomizer\" 中");
             }
         }
     }

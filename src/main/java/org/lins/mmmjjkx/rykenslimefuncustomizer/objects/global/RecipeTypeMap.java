@@ -1,11 +1,12 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.global;
 
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.bukkit.Bukkit;
 import org.jetbrains.annotations.Nullable;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.RykenSlimefunCustomizer;
 
 public class RecipeTypeMap {
     private static final Map<String, RecipeType> recipeTypes;
@@ -38,7 +39,7 @@ public class RecipeTypeMap {
         return recipeTypes.get(s);
     }
 
-    private enum RecipeTypeExpandIntegration {
+    public enum RecipeTypeExpandIntegration {
         INFINITY_EXPANSION("io.github.mooy1.infinityexpansion.items.blocks.InfinityWorkbench", "TYPE", true),
         SLIME_TINKER("io.github.sefiraat.slimetinker.items.workstations.workbench.Workbench", "TYPE", true);
 
@@ -50,6 +51,16 @@ public class RecipeTypeMap {
             this.clazz = clazz;
             this.fieldName = fieldName;
             this.isStatic = isStatic;
+        }
+
+        public RecipeType get() {
+            try {
+                Class<?> theClazz = Class.forName(clazz);
+                Field field = theClazz.getDeclaredField(fieldName);
+                return (RecipeType) field.get(null);
+            } catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
+                return null;
+            }
         }
 
         static void registerRecipeTypes() {
@@ -64,11 +75,12 @@ public class RecipeTypeMap {
                     } else {
                         instance = clazz.newInstance(); // or something sus
                     }
-                    if (instance instanceof RecipeType) {
-                        RecipeTypeMap.pushRecipeType((RecipeType) instance);
+
+                    if (instance instanceof RecipeType rt) {
+                        RecipeTypeMap.pushRecipeType(rt);
                     }
                 } catch (Exception e) {
-                    Bukkit.getLogger()
+                    RykenSlimefunCustomizer.INSTANCE.getLogger()
                             .warning("Failed to get external recipe type from " + className + "#" + fieldName + ": "
                                     + e.getMessage());
                 }

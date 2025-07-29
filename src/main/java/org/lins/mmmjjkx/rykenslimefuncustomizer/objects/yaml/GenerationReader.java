@@ -26,6 +26,7 @@ public class GenerationReader extends YamlReader<GenerationInfo> {
 
         List<GenerationArea> areas = new ArrayList<>();
         ConfigurationSection areaSection = section.getConfigurationSection("areas");
+        if (areaSection == null) return null;
 
         String id = addon.getId(s, section.getString("slimefun_id"));
         SlimefunItemStack slimefunItemStack = getPreloadItem(id);
@@ -54,7 +55,7 @@ public class GenerationReader extends YamlReader<GenerationInfo> {
         int maxSize = section.getInt("maxSize");
         int minSize = section.getInt("minSize");
         Optional<Material> materialOptional =
-                Optional.ofNullable(Material.matchMaterial(section.getString("replacement")));
+                Optional.ofNullable(Material.matchMaterial(section.getString("replacement", "")));
         Material replacement = Material.STONE;
 
         if (materialOptional.isPresent()) {

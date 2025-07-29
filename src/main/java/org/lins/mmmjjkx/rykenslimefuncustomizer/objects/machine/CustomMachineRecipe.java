@@ -1,5 +1,6 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.machine;
 
+import it.unimi.dsi.fastutil.ints.IntList;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 @Getter
 public class CustomMachineRecipe extends MachineRecipe {
     private final List<Integer> chances;
+    private final IntList noConsume;
 
     private final boolean chooseOneIfHas;
     private final boolean forDisplay;
@@ -22,13 +24,15 @@ public class CustomMachineRecipe extends MachineRecipe {
             List<Integer> chances,
             boolean chooseOneIfHas,
             boolean forDisplay,
-            boolean hide) {
+            boolean hide,
+            IntList noConsumeIndexes) {
         super(seconds, input.clone(), output.clone());
 
         this.chances = chances;
         this.chooseOneIfHas = chooseOneIfHas;
         this.forDisplay = forDisplay;
         this.hide = hide;
+        this.noConsume = noConsumeIndexes;
     }
 
     public List<ItemStack> getMatchChanceResult() {

@@ -6,6 +6,6 @@ import org.bukkit.inventory.ItemStack;
 
 public record MachineTemplate(ItemStack template, List<CustomMachineRecipe> recipes) {
     public boolean isItemSimilar(ItemStack item) {
-        return SlimefunUtils.isItemSimilar(item, template, true);
+        return SlimefunUtils.isItemSimilar(item, template, true, true, true);
     }
 }

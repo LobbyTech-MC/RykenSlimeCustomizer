@@ -4,8 +4,11 @@ import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.collections.Pair;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
@@ -39,13 +42,9 @@ public class RecipeMachineReader extends YamlReader<CustomRecipeMachine> {
         SlimefunItemStack slimefunItemStack = getPreloadItem(id);
         if (slimefunItemStack == null) return null;
 
-        ItemStack[] recipe = CommonUtils.readRecipe(section.getConfigurationSection("recipe"), addon);
-        String recipeType = section.getString("recipe_type", "NULL");
-
-        Pair<ExceptionHandler.HandleResult, RecipeType> rt = ExceptionHandler.getRecipeType(
-                "在附属" + addon.getAddonId() + "中加载配方机器" + s + "时遇到了问题: " + "错误的配方类型" + recipeType + "!", recipeType);
-
-        if (rt.getFirstValue() == ExceptionHandler.HandleResult.FAILED) return null;
+        Pair<RecipeType, ItemStack[]> recipePair = getRecipe(section, addon);
+        RecipeType rt = recipePair.getFirstValue();
+        ItemStack[] recipe = recipePair.getSecondValue();
 
         CustomMenu menu = CommonUtils.getIf(addon.getMenus(), m -> m.getID().equalsIgnoreCase(id));
         if (menu == null) {
@@ -96,7 +95,7 @@ public class RecipeMachineReader extends YamlReader<CustomRecipeMachine> {
         return new CustomRecipeMachine(
                 group.getSecondValue(),
                 slimefunItemStack,
-                rt.getSecondValue(),
+                rt,
                 recipe,
                 input.stream().mapToInt(x -> x).toArray(),
                 output.stream().mapToInt(x -> x).toArray(),
@@ -179,15 +178,48 @@ public class RecipeMachineReader extends YamlReader<CustomRecipeMachine> {
                 }
             }
 
-            boolean chooseOne = recipes.getBoolean("chooseOne", false);
-            boolean forDisplay = recipes.getBoolean("forDisplay", false);
-            boolean hide = recipes.getBoolean("hide", false);
-
-            input = CommonUtils.removeNulls(input);
-            output = CommonUtils.removeNulls(output);
-
-            list.add(new CustomMachineRecipe(seconds, input, output, chances, chooseOne, forDisplay, hide));
+            addToList(list, recipes, seconds, input, chances, output);
         }
         return list;
+    }
+
+    static void addToList(
+            List<CustomMachineRecipe> list,
+            ConfigurationSection recipes,
+            int seconds,
+            ItemStack[] input,
+            List<Integer> chances,
+            ItemStack[] output) {
+
+        boolean chooseOne = recipes.getBoolean("chooseOne", false);
+        boolean forDisplay = recipes.getBoolean("forDisplay", false);
+        boolean hide = recipes.getBoolean("hide", false);
+
+        ConfigurationSection inputSection = recipes.getConfigurationSection("input");
+        IntList noConsumes = new IntArrayList();
+        if (inputSection != null) {
+            List<String> keys = new ArrayList<>(inputSection.getKeys(false));
+            for (String s : keys) {
+                ConfigurationSection section = inputSection.getConfigurationSection(s);
+                if (section == null) {
+                    continue;
+                }
+
+                if (section.getBoolean("noConsume", false)) {
+                    noConsumes.add(keys.indexOf(s));
+                }
+            }
+
+            boolean noConsume = recipes.getBoolean("noConsume", false);
+            if (noConsume) {
+                noConsumes.clear();
+                noConsumes.addAll(IntStream.rangeClosed(0, keys.size()).boxed().toList());
+            }
+        }
+
+        input = CommonUtils.removeNulls(input);
+        output = CommonUtils.removeNulls(output);
+
+        list.add(new CustomMachineRecipe(seconds, input, output, chances, chooseOne, forDisplay, hide, noConsumes));
     }
 }

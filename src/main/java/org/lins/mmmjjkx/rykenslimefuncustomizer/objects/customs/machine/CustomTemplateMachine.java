@@ -19,6 +19,7 @@ import io.github.thebusybiscuit.slimefun4.libraries.dough.inventory.InvUtils;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.ItemStackWrapper;
+import it.unimi.dsi.fastutil.ints.IntList;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -180,6 +181,7 @@ public class CustomTemplateMachine extends AbstractEmptyMachine<CustomTemplateCr
         return displayRecipes;
     }
 
+    @SuppressWarnings("unused")
     private void tick(Block b, SlimefunItem item, SlimefunBlockData data) {
         BlockMenu inv = data.getBlockMenu();
         if (inv != null) {
@@ -198,7 +200,6 @@ public class CustomTemplateMachine extends AbstractEmptyMachine<CustomTemplateCr
 
             CustomTemplateCraftingOperation currentOperation = processor.getOperation(b);
             if (currentOperation != null) {
-
                 if (!currentOperation.getTemplate().isItemSimilar(templateItem)) {
                     processor.endOperation(b);
                     if (menu.getProgressSlot() >= 0) {
@@ -304,10 +305,8 @@ public class CustomTemplateMachine extends AbstractEmptyMachine<CustomTemplateCr
 
             if (recipe.getInput().length == 0) {
                 if (getInputSlots().length == 0) {
-                    for (ItemStack output : recipe.getOutput()) {
-                        if (!InvUtils.fitAll(inv.toInventory(), recipe.getOutput(), getOutputSlots())) {
-                            return null;
-                        }
+                    if (!InvUtils.fitAll(inv.toInventory(), recipe.getOutput(), getOutputSlots())) {
+                        return null;
                     }
 
                     return recipe;
@@ -315,18 +314,12 @@ public class CustomTemplateMachine extends AbstractEmptyMachine<CustomTemplateCr
                     boolean allEmpty = true;
                     for (int i : getInputSlots()) {
                         ItemStack item = inv.getItemInSlot(i);
-                        if (item != null && item.getType() != Material.AIR) {
+                        if (item != null && item.getType().isAir()) {
                             allEmpty = false;
                         }
                     }
 
                     if (allEmpty) {
-                        for (ItemStack output : recipe.getOutput()) {
-                            if (!InvUtils.fitAll(inv.toInventory(), recipe.getOutput(), getOutputSlots())) {
-                                return null;
-                            }
-                        }
-
                         return recipe;
                     }
                 }
@@ -374,11 +367,20 @@ public class CustomTemplateMachine extends AbstractEmptyMachine<CustomTemplateCr
             return null;
         }
 
-        for (Map.Entry<Integer, Integer> entry : recipe.getValue().entrySet()) {
-            inv.consumeItem(entry.getKey(), entry.getValue());
+        CustomMachineRecipe recipeKey = recipe.getKey();
+
+        List<Map.Entry<Integer, Integer>> entries =
+                new ArrayList<>(recipe.getValue().entrySet());
+        IntList ints = recipeKey.getNoConsume();
+
+        for (Map.Entry<Integer, Integer> entry : entries) {
+            int i = entries.indexOf(entry);
+            if (!ints.contains(i)) {
+                inv.consumeItem(entry.getKey(), entry.getValue());
+            }
         }
 
-        return recipe.getKey();
+        return recipeKey;
     }
 
     @NotNull @Override

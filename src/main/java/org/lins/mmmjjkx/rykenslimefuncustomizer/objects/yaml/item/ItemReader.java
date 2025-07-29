@@ -61,21 +61,9 @@ public class ItemReader extends YamlReader<SlimefunItem> {
         SlimefunItemStack sfis = getPreloadItem(id);
         if (sfis == null) return null;
 
-        ItemStack[] itemStacks = CommonUtils.readRecipe(section.getConfigurationSection("recipe"), addon);
-        String recipeType = section.getString("recipe_type", "NULL");
-
-        boolean piglin = section.getBoolean("piglin_trade_chance", false);
-        RecipeType rt;
-        if (piglin) {
-            rt = RecipeType.BARTER_DROP;
-        } else {
-            Pair<ExceptionHandler.HandleResult, RecipeType> rt1 = ExceptionHandler.getRecipeType(
-                    "在附属" + addon.getAddonId() + "中加载物品" + s + "时遇到了问题: " + "错误的配方类型" + recipeType + "!", recipeType);
-
-            if (rt1.getFirstValue() == ExceptionHandler.HandleResult.FAILED) return null;
-
-            rt = rt1.getSecondValue();
-        }
+        Pair<RecipeType, ItemStack[]> recipePair = getRecipe(section, addon);
+        RecipeType rt = recipePair.getFirstValue();
+        ItemStack[] itemStacks = recipePair.getSecondValue();
 
         JavaScriptEval eval = null;
         if (section.contains("script")) {
@@ -165,14 +153,14 @@ public class ItemReader extends YamlReader<SlimefunItem> {
                 return null;
             }
 
-            Class<? extends CustomItem> clazz = (Class<? extends CustomItem>) ClassUtils.generateClass(
+            Class<? extends CustomItem> clazz = ClassUtils.generateClass(
                     instance.getClass(), "WitherProof", "Item", new Class[] {WitherProofBlockImpl.class}, null);
 
             instance = (CustomItem) clazz.getDeclaredConstructors()[0].newInstance(constructorArgs);
         }
 
         if (section.getBoolean("soulbound", false)) {
-            Class<? extends CustomItem> clazz = (Class<? extends CustomItem>) ClassUtils.generateClass(
+            Class<? extends CustomItem> clazz = ClassUtils.generateClass(
                     instance.getClass(), "Soulbound", "Item", new Class[] {Soulbound.class}, null);
 
             instance = (CustomItem) clazz.getDeclaredConstructors()[0].newInstance(constructorArgs);
@@ -187,7 +175,7 @@ public class ItemReader extends YamlReader<SlimefunItem> {
             }
 
             int finalChance = chance;
-            Class<? extends CustomItem> clazz = (Class<? extends CustomItem>) ClassUtils.generateClass(
+            Class<? extends CustomItem> clazz = ClassUtils.generateClass(
                     instance.getClass(),
                     "PiglinTradeAble",
                     "Item",
@@ -212,7 +200,7 @@ public class ItemReader extends YamlReader<SlimefunItem> {
 
             CommonUtils.addLore(sfis, true, LoreBuilder.radioactive(radioactivity));
 
-            Class<? extends CustomItem> clazz = (Class<? extends CustomItem>) ClassUtils.generateClass(
+            Class<? extends CustomItem> clazz = ClassUtils.generateClass(
                     instance.getClass(),
                     "Radiation",
                     "Item",

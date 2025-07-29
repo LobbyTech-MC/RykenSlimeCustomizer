@@ -42,13 +42,9 @@ public class FoodReader extends YamlReader<CustomFood> {
         SlimefunItemStack sfis = getPreloadItem(id);
         if (sfis == null) return null;
 
-        ItemStack[] itemStacks = CommonUtils.readRecipe(section.getConfigurationSection("recipe"), addon);
-        String recipeType = section.getString("recipe_type", "NULL");
-
-        Pair<ExceptionHandler.HandleResult, RecipeType> rt = ExceptionHandler.getRecipeType(
-                "在附属" + addon.getAddonId() + "中加载食物" + s + "时遇到了问题: " + "错误的配方类型" + recipeType + "!", recipeType);
-
-        if (rt.getFirstValue() == ExceptionHandler.HandleResult.FAILED) return null;
+        Pair<RecipeType, ItemStack[]> recipePair = getRecipe(section, addon);
+        RecipeType rt = recipePair.getFirstValue();
+        ItemStack[] itemStacks = recipePair.getSecondValue();
 
         JavaScriptEval eval = null;
         if (section.contains("script")) {
@@ -64,14 +60,14 @@ public class FoodReader extends YamlReader<CustomFood> {
 
         if (CommonUtils.versionToCode(Bukkit.getMinecraftVersion()) >= 1205) {
             if (Bukkit.getPluginManager().isPluginEnabled("NBTAPI")) {
-                sfis = nbtApply(id, section, sfis);
+                nbtApply(id, section, sfis);
             }
         }
 
-        return new CustomFood(group.getSecondValue(), sfis, rt.getSecondValue(), itemStacks, eval, sfis);
+        return new CustomFood(group.getSecondValue(), sfis, rt, itemStacks, eval, sfis);
     }
 
-    private SlimefunItemStack nbtApply(String s, ConfigurationSection section, SlimefunItemStack sfis) {
+    private void nbtApply(String s, ConfigurationSection section, SlimefunItemStack sfis) {
         int nutrition = section.getInt("nutrition");
         float saturation = section.getInt("saturation");
         boolean alwaysEatable = section.getBoolean("always_eatable", false);
@@ -101,8 +97,6 @@ public class FoodReader extends YamlReader<CustomFood> {
             c.setBoolean("can_always_eat", alwaysEatable);
             c.setFloat("eat_seconds", finalEatSeconds);
         });
-
-        return sfis;
     }
 
     @Override

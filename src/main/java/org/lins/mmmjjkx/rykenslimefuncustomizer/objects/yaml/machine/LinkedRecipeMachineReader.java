@@ -6,8 +6,10 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.collections.Pair;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
@@ -67,13 +69,9 @@ public class LinkedRecipeMachineReader extends YamlReader<CustomLinkedRecipeMach
         SlimefunItemStack slimefunItemStack = getPreloadItem(id);
         if (slimefunItemStack == null) return null;
 
-        ItemStack[] recipe = CommonUtils.readRecipe(section.getConfigurationSection("recipe"), addon);
-        String recipeType = section.getString("recipe_type", "NULL");
-
-        Pair<ExceptionHandler.HandleResult, RecipeType> rt = ExceptionHandler.getRecipeType(
-                "在附属" + addon.getAddonId() + "中加载强配方机器" + s + "时遇到了问题: " + "错误的配方类型" + recipeType + "!", recipeType);
-
-        if (rt.getFirstValue() == ExceptionHandler.HandleResult.FAILED) return null;
+        Pair<RecipeType, ItemStack[]> recipePair = getRecipe(section, addon);
+        RecipeType rt = recipePair.getFirstValue();
+        ItemStack[] recipe = recipePair.getSecondValue();
 
         CustomMenu menu = CommonUtils.getIf(addon.getMenus(), m -> m.getID().equalsIgnoreCase(id));
         if (menu == null) {
@@ -125,7 +123,7 @@ public class LinkedRecipeMachineReader extends YamlReader<CustomLinkedRecipeMach
         return new CustomLinkedRecipeMachine(
                 group.getSecondValue(),
                 slimefunItemStack,
-                rt.getSecondValue(),
+                rt,
                 recipe,
                 input.stream().mapToInt(x -> x).toArray(),
                 output.stream().mapToInt(x -> x).toArray(),
@@ -216,7 +214,9 @@ public class LinkedRecipeMachineReader extends YamlReader<CustomLinkedRecipeMach
             boolean chooseOne = recipes.getBoolean("chooseOne", false);
             boolean forDisplay = recipes.getBoolean("forDisplay", false);
             boolean hide = recipes.getBoolean("hide", false);
+            boolean noConsume = recipes.getBoolean("noConsume", false);
 
+            Set<Integer> noConsumes = new HashSet<>();
             Map<Integer, ItemStack> finalInput = new HashMap<>();
             for (int i = 0; i < inputSize; i++) {
                 ConfigurationSection section1 = inputs.getConfigurationSection(String.valueOf(i + 1));
@@ -243,19 +243,26 @@ public class LinkedRecipeMachineReader extends YamlReader<CustomLinkedRecipeMach
                 }
 
                 finalInput.put(slot, itemStack);
+
+                boolean noConsume1 = section1.getBoolean("noConsume", false);
+                if (noConsume1) {
+                    noConsumes.add(slot);
+                }
             }
 
             int[] array = new int[freeChances.size()];
             for (int i = 0; i < array.length; i++) {
                 array[i] = i;
             }
+
             list.add(new CustomLinkedMachineRecipe(
                     seconds,
                     finalInput,
                     new LinkedOutput(freeOutput.toArray(new ItemStack[0]), linkedOutput, array, linkedChances),
                     chooseOne,
                     forDisplay,
-                    hide));
+                    hide,
+                    noConsumes));
         }
         return list;
     }
