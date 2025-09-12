@@ -25,7 +25,10 @@ import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.ProjectAddon;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.script.ScriptEval;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.utils.BlockMenuUtil;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.utils.ExceptionHandler;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 
+@EnableAsync
 public class JavaScriptEval extends ScriptEval {
     private final Context jsEngine = Context.newBuilder("js")
             .hostClassLoader(RykenSlimefunCustomizer.class.getClassLoader())
@@ -55,6 +58,7 @@ public class JavaScriptEval extends ScriptEval {
         addon.getScriptEvals().add(this);
     }
 
+    @Async
     private void advancedSetup() {
         JSRealm realm = JavaScriptLanguage.getJSRealm(jsEngine);
         TruffleLanguage.Env env = realm.getEnv();
@@ -69,6 +73,7 @@ public class JavaScriptEval extends ScriptEval {
     }
 
     @Override
+    @Async
     public void close() {
         try {
             jsEngine.close();
@@ -77,11 +82,13 @@ public class JavaScriptEval extends ScriptEval {
     }
 
     @Override
+    @Async
     public void addThing(String name, Object value) {
         jsEngine.getBindings("js").putMember(name, value);
     }
 
     @Override
+    @Async
     public String key() {
         return "js";
     }
@@ -91,6 +98,7 @@ public class JavaScriptEval extends ScriptEval {
 
     @Nullable @CanIgnoreReturnValue
     @Override
+    @Async
     public Object evalFunction(String funName, Object... args) {
         if (failedFunctions.contains(funName)) {
             return null;
@@ -131,6 +139,7 @@ public class JavaScriptEval extends ScriptEval {
         return null;
     }
 
+    @Async
     private void handleExecutionError(Throwable e, String funName) {
         functionCache.remove(funName);
         failedFunctions.add(funName);
@@ -139,6 +148,7 @@ public class JavaScriptEval extends ScriptEval {
                 "在运行" + getAddon().getAddonName() + "的脚本" + getFile().getName() + "时发生错误", e);
     }
 
+    @Async
     protected final void contextInit() {
         super.contextInit();
         if (jsEngine != null) {
