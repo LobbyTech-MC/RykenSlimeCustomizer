@@ -10,6 +10,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.Random;
 import javax.annotation.Nonnull;
+
+import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -113,18 +115,24 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
 
             SlimefunItemStack slimefunItemStack = generationInfo.getSlimefunItemStack();
 
-            block.setType(slimefunItemStack.getType(), false);
-            if (slimefunItemStack.getType() == Material.PLAYER_HEAD) {
-                SkullMeta meta = (SkullMeta) slimefunItemStack.getItemMeta();
-                PlayerProfile profile = meta.getPlayerProfile();
-                if (profile != null) {
-                    PlayerTextures textures = profile.getTextures();
-                    URL skin = textures.getSkin();
-                    if (skin != null) {
-                        PlayerHead.setSkin(block, PlayerSkin.fromURL(skin.toString()), false);
+            Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
+            	block.setType(slimefunItemStack.getType(), false);
+                if (block.getType() == Material.PLAYER_HEAD && slimefunItemStack.getType() == Material.PLAYER_HEAD) {
+                    SkullMeta meta = (SkullMeta) slimefunItemStack.getItemMeta();
+                    PlayerProfile profile = meta.getPlayerProfile();
+                    if (profile != null) {
+                        PlayerTextures textures = profile.getTextures();
+                        URL skin = textures.getSkin();
+                        if (skin != null) {
+                            PlayerHead.setSkin(block, PlayerSkin.fromURL(skin.toString()), false);
+                        }
                     }
                 }
-            }
+            });
+
+            		
+            		
+            
 
             BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
             controller.createBlock(
