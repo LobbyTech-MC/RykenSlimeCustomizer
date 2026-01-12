@@ -115,7 +115,7 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
 
             SlimefunItemStack slimefunItemStack = generationInfo.getSlimefunItemStack();
 
-            Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
+            RykenSlimefunCustomizer.INSTANCE.getServer().getScheduler().scheduleSyncDelayedTask(RykenSlimefunCustomizer.INSTANCE, () -> {
             	block.setType(slimefunItemStack.getType(), false);
                 if (block.getType() == Material.PLAYER_HEAD && slimefunItemStack.getType() == Material.PLAYER_HEAD) {
                     SkullMeta meta = (SkullMeta) slimefunItemStack.getItemMeta();
