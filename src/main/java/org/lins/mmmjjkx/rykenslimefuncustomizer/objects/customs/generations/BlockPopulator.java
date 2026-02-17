@@ -140,10 +140,10 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
             	try {
             		BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
-                	if (location.getBlock() == null || location.getBlock().getType() == Material.AIR) {
-                		controller.createBlock(
-                                location, generationInfo.getSlimefunItemStack().getItemId());
-                	}
+                	//if (location.getBlock() == null || location.getBlock().getType() == Material.AIR) {
+                	controller.createBlock(
+                            location, generationInfo.getSlimefunItemStack().getItemId());
+                	//}
             	} catch  (IllegalStateException e) {
         			e.printStackTrace();
         		}
