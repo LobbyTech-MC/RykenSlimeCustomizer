@@ -1,11 +1,14 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer.utils;
 
-import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import java.util.HashSet;
 import java.util.Set;
+
 import javax.annotation.Nonnull;
+
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+
+import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 
 public class ItemUtils {
     /**

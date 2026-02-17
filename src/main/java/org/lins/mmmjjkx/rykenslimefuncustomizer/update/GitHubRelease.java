@@ -1,6 +1,7 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer.update;
 
 import java.util.List;
+
 import lombok.Getter;
 
 @Getter

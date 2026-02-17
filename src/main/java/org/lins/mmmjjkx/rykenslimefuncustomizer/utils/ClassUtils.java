@@ -3,9 +3,11 @@ package org.lins.mmmjjkx.rykenslimefuncustomizer.utils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+
+import org.jetbrains.annotations.Nullable;
+
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
-import org.jetbrains.annotations.Nullable;
 
 public class ClassUtils {
     private static final Map<String, Class<?>> cache = new HashMap<>();

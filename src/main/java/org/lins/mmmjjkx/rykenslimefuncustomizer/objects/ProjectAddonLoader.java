@@ -1,7 +1,5 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer.objects;
 
-import io.github.thebusybiscuit.slimefun4.api.researches.Research;
-import io.github.thebusybiscuit.slimefun4.libraries.commons.lang.Validate;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -12,8 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import net.bytebuddy.ByteBuddy;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.Nullable;
@@ -25,13 +22,37 @@ import org.lins.mmmjjkx.rykenslimefuncustomizer.listeners.ScriptableEventListene
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.CustomAddonConfig;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.global.RecipeTypeMap;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.script.ScriptEval;
-import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.*;
-import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.item.*;
-import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.machine.*;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.GenerationReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.ItemGroupReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.MenuReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.RecipeTypesReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.ResearchReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.item.ArmorReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.item.CapacitorsReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.item.FoodReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.item.GeoResourceReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.item.ItemReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.item.MobDropsReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.machine.GeneratorReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.machine.LinkedRecipeMachineReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.machine.MachineReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.machine.MaterialGeneratorReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.machine.MultiBlockMachineReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.machine.RecipeMachineReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.machine.SimpleMachineReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.machine.SolarGeneratorReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.machine.SuperReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.machine.TemplateMachineReader;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.yaml.machine.WorkbenchReader;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.update.GithubUpdater;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.utils.CommonUtils;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.utils.Constants;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.utils.ExceptionHandler;
+
+import io.github.thebusybiscuit.slimefun4.api.researches.Research;
+import io.github.thebusybiscuit.slimefun4.libraries.commons.lang.Validate;
+import net.bytebuddy.ByteBuddy;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public class ProjectAddonLoader {
     private final Map<String, File> ids;

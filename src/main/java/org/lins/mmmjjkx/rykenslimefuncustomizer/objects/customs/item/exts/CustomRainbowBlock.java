@@ -1,14 +1,16 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.item.exts;
 
+import java.util.List;
+
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
+import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.parent.CustomItem;
+
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.handlers.RainbowTickHandler;
 import io.github.thebusybiscuit.slimefun4.utils.ColoredMaterial;
-import java.util.List;
-import org.bukkit.Material;
-import org.bukkit.inventory.ItemStack;
-import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.parent.CustomItem;
 
 public class CustomRainbowBlock extends CustomItem {
     private final Object[] constructorArgs;

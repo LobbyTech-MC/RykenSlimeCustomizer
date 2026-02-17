@@ -1,8 +1,10 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.generations;
 
-import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import java.util.List;
+
 import javax.annotation.Nonnull;
+
+import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import lombok.Getter;
 
 @Getter

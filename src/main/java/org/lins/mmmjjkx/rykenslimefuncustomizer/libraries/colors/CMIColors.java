@@ -1,8 +1,10 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer.libraries.colors;
 
-import java.awt.*;
-import lombok.Getter;
+import java.awt.Color;
+
 import org.bukkit.Material;
+
+import lombok.Getter;
 
 @Getter
 public enum CMIColors {

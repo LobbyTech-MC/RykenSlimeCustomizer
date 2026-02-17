@@ -1,11 +1,13 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.generations;
 
 import javax.annotation.Nonnull;
-import lombok.Getter;
-import lombok.Setter;
+
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.Range;
+
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter

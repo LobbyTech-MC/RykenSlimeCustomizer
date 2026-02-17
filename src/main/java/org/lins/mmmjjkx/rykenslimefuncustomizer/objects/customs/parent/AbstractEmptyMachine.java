@@ -1,5 +1,7 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.parent;
 
+import org.bukkit.inventory.ItemStack;
+
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -8,7 +10,6 @@ import io.github.thebusybiscuit.slimefun4.core.attributes.MachineProcessHolder;
 import io.github.thebusybiscuit.slimefun4.core.machines.MachineOperation;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.interfaces.InventoryBlock;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
-import org.bukkit.inventory.ItemStack;
 
 @SuppressWarnings("deprecation")
 public abstract class AbstractEmptyMachine<O extends MachineOperation> extends SlimefunItem

@@ -1,10 +1,13 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.script.enhanced;
 
-import de.tr7zw.nbtapi.*;
-import de.tr7zw.nbtapi.iface.ReadWriteNBT;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
+
+import de.tr7zw.nbtapi.NBT;
+import de.tr7zw.nbtapi.NBTBlock;
+import de.tr7zw.nbtapi.NBTCompound;
+import de.tr7zw.nbtapi.iface.ReadWriteNBT;
 
 public class NBTAPIIntegration {
     public static NBTAPIIntegration instance = new NBTAPIIntegration();

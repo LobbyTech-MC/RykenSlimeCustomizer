@@ -1,9 +1,13 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer;
 
-import io.github.thebusybiscuit.slimefun4.libraries.commons.lang.Validate;
 import java.io.File;
-import java.util.*;
-import lombok.Getter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.ProjectAddon;
@@ -11,6 +15,9 @@ import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.ProjectAddonLoader;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.global.RecipeTypeMap;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.utils.Constants;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.utils.ExceptionHandler;
+
+import io.github.thebusybiscuit.slimefun4.libraries.commons.lang.Validate;
+import lombok.Getter;
 
 public final class ProjectAddonManager {
     public static File ADDONS_DIRECTORY;

@@ -1,8 +1,10 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.item;
 
-import io.github.thebusybiscuit.slimefun4.libraries.dough.items.CustomItemStack;
 import java.util.List;
+
 import org.bukkit.inventory.ItemStack;
+
+import io.github.thebusybiscuit.slimefun4.libraries.dough.items.CustomItemStack;
 
 public class RSCItemStack extends CustomItemStack {
     public RSCItemStack(ItemStack item, String name, List<String> lore) {
