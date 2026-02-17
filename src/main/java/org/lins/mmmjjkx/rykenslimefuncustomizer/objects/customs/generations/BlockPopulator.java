@@ -6,6 +6,8 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.skins.PlayerHead;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.skins.PlayerSkin;
+
+import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Random;
@@ -134,9 +136,21 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             		
             
 
-            BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
-            controller.createBlock(
-                    location, generationInfo.getSlimefunItemStack().getItemId());
+            
+            Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
+            	try {
+            		BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
+                	if (location.getBlock() == null || location.getBlock().getType() == Material.AIR) {
+                		controller.createBlock(
+                                location, generationInfo.getSlimefunItemStack().getItemId());
+                	}
+            	} catch  (IllegalStateException e) {
+        			e.printStackTrace();
+        		}
+            	
+            	
+            });
+            
 
             r = random.nextInt(0, 3);
             if (r == 0) {
