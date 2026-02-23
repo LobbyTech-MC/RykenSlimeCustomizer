@@ -26,7 +26,6 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.skins.PlayerHead;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.skins.PlayerSkin;
 
-@SuppressWarnings("deprecation")
 public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
     private static final List<String> blockedWorlds = List.of(
             "CAsteroidBelt",
