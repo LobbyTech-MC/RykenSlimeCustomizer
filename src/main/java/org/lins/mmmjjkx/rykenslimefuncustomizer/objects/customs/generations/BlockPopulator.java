@@ -149,8 +149,10 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             		
 
             		// 4. 现在安全地创建
-            		if (location.getBlock().getType() == Material.AIR && controller.getBlockData(location) == null)
-                	controller.createBlock(location, generationInfo.getSlimefunItemStack().getItemId());
+            		if (location.getBlock().getType() == Material.AIR && controller.getBlockData(location) == null) {
+            			controller.createBlock(location, generationInfo.getSlimefunItemStack().getItemId());
+            		}
+                	
             	} catch  (IllegalStateException e) {
         			e.printStackTrace();
         		}
