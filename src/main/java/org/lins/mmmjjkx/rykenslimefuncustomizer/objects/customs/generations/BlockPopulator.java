@@ -142,17 +142,11 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             		// 1. 获取 Slimefun 的数据控制器
             		BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
 
-            		// 2. 检查该位置是否已经有 Slimefun 数据
-            		if (controller.getBlockData(location) != null) {
-            		    // 如果已有数据，必须先移除，否则 createBlock 会报错
-            		    controller.removeBlock(location);
+            		if (location.getBlock().getType() == Material.AIR && controller.getBlockData(location) == null && controller.getBlockData(location).getDataKeys().isEmpty()) {
+            			controller.createBlock(location, generationInfo.getSlimefunItemStack().getItemId());
             		}
 
-            		// 3. (可选) 确保方块本身物理上也是空气或可覆盖的
-            		location.getBlock().setType(Material.AIR);
-
-            		// 4. 现在安全地创建
-                	controller.createBlock(location, generationInfo.getSlimefunItemStack().getItemId());
+                	
             	} catch  (IllegalStateException e) {
         			e.printStackTrace();
         		}
