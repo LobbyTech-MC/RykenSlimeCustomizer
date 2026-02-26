@@ -130,9 +130,15 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
                         }
                     }
                 }
-                
-                
-                try {
+            });
+
+            		
+            		
+            
+
+            
+            Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
+            	try {
             		// 1. 获取 Slimefun 的数据控制器
             		BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
 
@@ -143,16 +149,15 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             		}
 
             		// 3. (可选) 确保方块本身物理上也是空气或可覆盖的
-            		if (location.getBlock().getType() != Material.AIR) {
-            			location.getBlock().setType(Material.AIR);
-            		}
-            		
+            		location.getBlock().setType(Material.AIR);
 
             		// 4. 现在安全地创建
                 	controller.createBlock(location, generationInfo.getSlimefunItemStack().getItemId());
             	} catch  (IllegalStateException e) {
         			e.printStackTrace();
         		}
+            	
+            	
             });
             
 
