@@ -2,6 +2,7 @@ package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.generations;
 
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import javax.annotation.Nonnull;
@@ -48,6 +49,7 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             "world_void",
             "corporate_dimension",
             "logispace");
+	private Map<String, PlayerSkin> skinCache;
 
     @Override
     public void populate(@Nonnull World world, @Nonnull Random random, @Nonnull Chunk source) {
@@ -73,6 +75,31 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
         }
     }
 
+    public void optimizedSetSkin(Block block, String skinUrl, Boolean sendBlockUpdate) {
+        if (skinCache.containsKey(skinUrl)) {
+            PlayerHead.setSkin(block, skinCache.get(skinUrl), false);
+            return;
+        }
+
+        Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
+            try {
+                PlayerSkin skin = PlayerSkin.fromURL(skinUrl);
+                skinCache.put(skinUrl, skin);
+                Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> 
+                    PlayerHead.setSkin(block, skin, false)
+                );
+            } catch (Exception e) {
+            	e.printStackTrace();
+                // 异常时使用默认皮肤
+            	/*
+                Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> 
+                    PlayerHead.setSkin(block, PlayerSkin.getDefaultSkin(), false)
+                );
+                */
+            }
+        });
+    }
+    
     private void generateNext(
             int chunkX,
             int chunkZ,
@@ -126,7 +153,7 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
                         PlayerTextures textures = profile.getTextures();
                         URL skin = textures.getSkin();
                         if (skin != null) {
-                            PlayerHead.setSkin(block, PlayerSkin.fromURL(skin.toString()), false);
+                        	optimizedSetSkin(block, skin.toString(), false);
                         }
                     }
                 }
