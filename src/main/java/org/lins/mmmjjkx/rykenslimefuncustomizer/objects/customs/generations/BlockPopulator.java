@@ -76,8 +76,8 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
     }
 
     public void optimizedSetSkin(Block block, String skinUrl, Boolean sendBlockUpdate) {
-        if (skinCache.containsKey(skinUrl)) {
-            PlayerHead.setSkin(block, skinCache.get(skinUrl), false);
+        if (skinCache != null && skinCache.containsKey(skinUrl)) {
+            PlayerHead.setSkin(block, skinCache.get(skinUrl), sendBlockUpdate);
             return;
         }
 
@@ -86,7 +86,7 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
                 PlayerSkin skin = PlayerSkin.fromURL(skinUrl);
                 skinCache.put(skinUrl, skin);
                 Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> 
-                    PlayerHead.setSkin(block, skin, false)
+                    PlayerHead.setSkin(block, skin, sendBlockUpdate)
                 );
             } catch (Exception e) {
             	e.printStackTrace();
