@@ -1,6 +1,7 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.generations;
 
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -49,7 +50,32 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             "world_void",
             "corporate_dimension",
             "logispace");
-	private Map<String, PlayerSkin> skinCache;
+	private static Map<String, PlayerSkin> skinCache = new HashMap<>();
+	
+	public static void optimizedSetSkin(Block block, String skinUrl, Boolean sendBlockUpdate) {
+        if (!skinCache.isEmpty() && skinCache.containsKey(skinUrl)) {
+            PlayerHead.setSkin(block, skinCache.get(skinUrl), sendBlockUpdate);
+            return;
+        }
+
+        Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
+            try {
+                PlayerSkin skin = PlayerSkin.fromURL(skinUrl);
+                skinCache.put(skinUrl, skin);
+                Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> 
+                    PlayerHead.setSkin(block, skin, sendBlockUpdate)
+                );
+            } catch (Exception e) {
+            	e.printStackTrace();
+                // 异常时使用默认皮肤
+            	/*
+                Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> 
+                    PlayerHead.setSkin(block, PlayerSkin.getDefaultSkin(), false)
+                );
+                */
+            }
+        });
+    }
 
     @Override
     public void populate(@Nonnull World world, @Nonnull Random random, @Nonnull Chunk source) {
@@ -75,30 +101,7 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
         }
     }
 
-    public void optimizedSetSkin(Block block, String skinUrl, Boolean sendBlockUpdate) {
-        if (skinCache != null && skinCache.containsKey(skinUrl)) {
-            PlayerHead.setSkin(block, skinCache.get(skinUrl), sendBlockUpdate);
-            return;
-        }
-
-        Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
-            try {
-                PlayerSkin skin = PlayerSkin.fromURL(skinUrl);
-                skinCache.put(skinUrl, skin);
-                Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> 
-                    PlayerHead.setSkin(block, skin, sendBlockUpdate)
-                );
-            } catch (Exception e) {
-            	e.printStackTrace();
-                // 异常时使用默认皮肤
-            	/*
-                Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> 
-                    PlayerHead.setSkin(block, PlayerSkin.getDefaultSkin(), false)
-                );
-                */
-            }
-        });
-    }
+    
     
     private void generateNext(
             int chunkX,
