@@ -75,7 +75,7 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             try {
                 PlayerSkin skin = PlayerSkin.fromURL(skinUrl);
                 skinCache.put(skinUrl, skin);
-                RykenSlimefunCustomizer.INSTANCE.getServer().getScheduler().scheduleSyncDelayedTask(RykenSlimefunCustomizer.INSTANCE, () -> {
+                Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
                     PlayerHead.setSkin(block, skin, sendBlockUpdate);
                 });
                     
