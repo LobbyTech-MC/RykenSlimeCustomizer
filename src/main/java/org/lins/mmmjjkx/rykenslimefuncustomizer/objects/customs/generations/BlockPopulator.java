@@ -1,8 +1,6 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.generations;
 
 import java.net.URL;
-import java.util.Base64;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,17 +21,6 @@ import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.ProjectAddon;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.Range;
 
 import com.destroystokyo.paper.profile.PlayerProfile;
-import com.sk89q.jnbt.CompoundTag;
-import com.sk89q.jnbt.CompoundTagBuilder;
-import com.sk89q.jnbt.IntArrayTag;
-import com.sk89q.jnbt.ListTag;
-import com.sk89q.jnbt.StringTag;
-import com.sk89q.worldedit.EditSession;
-import com.sk89q.worldedit.WorldEdit;
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.math.BlockVector3;
-import com.sk89q.worldedit.world.block.BaseBlock;
-import com.sk89q.worldedit.world.block.BlockTypes;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.BlockDataController;
 
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -66,15 +53,17 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             "logispace");
 	private static Map<String, PlayerSkin> skinCache = new HashMap<>();
 	public static void optimizedSetSkin(Block block, String skinUrl, Boolean sendBlockUpdate) {
+		
         if (!skinCache.isEmpty() && skinCache.containsKey(skinUrl)) {
-            PlayerHead.setSkin(block, skinCache.get(skinUrl), sendBlockUpdate);
+        	Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
+        		PlayerHead.setSkin(block, skinCache.get(skinUrl), sendBlockUpdate);
+            });
             return;
         }
 
         Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
             try {
                 PlayerSkin skin = PlayerSkin.fromURL(skinUrl);
-                skinCache.put(skinUrl, skin);
                 Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
                     PlayerHead.setSkin(block, skin, sendBlockUpdate);
                 });
@@ -171,7 +160,7 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
                     if (profile != null) {
                         PlayerTextures textures = profile.getTextures();
                         URL skin = textures.getSkin();
-                        if (skin != null && block.getType() == Material.PLAYER_HEAD) {
+                        if (skin != null) {
                         	optimizedSetSkin(block, skin.toString(), false);
                         }
                     }
@@ -183,23 +172,16 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             
 
             
-            Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
+            Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
             	try {
             		BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
 
-            		// 1. 将 Bukkit 的 World 转为 WorldEdit 的 World
-            		com.sk89q.worldedit.world.World weWorld = BukkitAdapter.adapt(location.getWorld());
-            		// 2. 创建 EditSession（建议使用 try-with-resources 自动关闭并刷新队列）
-            		try (EditSession editSession = WorldEdit.getInstance().newEditSession(weWorld)) {
-            		    // 3. 设置方块 (坐标使用 BlockVector3)
-            		    BlockVector3 position = BlockVector3.at(location.getX(), location.getY(), location.getZ());
-            		    if (editSession.getBlock(position).getBlockType() != BlockTypes.AIR) {
-            		    	editSession.setBlock(position, BlockTypes.AIR); 
-            		    }
-            		    
-            		    
-            		    // 4. (可选) 如果不使用 try-with-resources，必须手动执行 editSession.close();
+            		
+            		if (location.getBlock().getType() != Material.AIR) {
+            			location.getBlock().setType(Material.AIR, false);
             		}
+            		    
+
             		
             		if (controller.getBlockData(location) != null) {
             		    controller.removeBlock(location);
