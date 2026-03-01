@@ -101,7 +101,7 @@
         <!-- 必须添加这个，它是 WorldEdit 核心依赖的存放地 -->
         <repository>
             <id>enginehub-maven</id>
-            <url>https://maven.enginehub.org</url>
+            <url>https://maven.enginehub.org/repo/</url>
         </repository>
 
         <repository>
