@@ -65,40 +65,32 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             "corporate_dimension",
             "logispace");
 	private static Map<String, PlayerSkin> skinCache = new HashMap<>();
-	public static void setSkull121(Location loc, String textureUrl) {
-	    // 1. 构造 Base64 纹理
-	    String json = "{\"textures\":{\"SKIN\":{\"url\":\"" + textureUrl + "\"}}}";
-	    String base64 = Base64.getEncoder().encodeToString(json.getBytes());
+	public static void optimizedSetSkin(Block block, String skinUrl, Boolean sendBlockUpdate) {
+        if (!skinCache.isEmpty() && skinCache.containsKey(skinUrl)) {
+            PlayerHead.setSkin(block, skinCache.get(skinUrl), sendBlockUpdate);
+            return;
+        }
 
-	    com.sk89q.worldedit.world.World weWorld = BukkitAdapter.adapt(loc.getWorld());
-
-	    try (EditSession editSession = WorldEdit.getInstance().newEditSession(weWorld)) {
-	        // 2. 构建符合 1.21 结构的 NBT (用于 Block Entity Data)
-	        // 1.21 中，头颅的属性结构嵌套在 profile 标签下
-	        CompoundTag textureValue = CompoundTagBuilder.create()
-	            .put("Value", new StringTag(base64))
-	            .build();
-
-	        ListTag texturesList = new ListTag(CompoundTag.class, Collections.singletonList(textureValue));
-	        CompoundTag properties = CompoundTagBuilder.create()
-	            .put("textures", texturesList)
-	            .build();
-
-	        CompoundTag profile = CompoundTagBuilder.create()
-	            .put("id", new IntArrayTag(new int[]{1, 2, 3, 4})) // 1.21 依然支持 IntArray UUID
-	            .put("properties", properties)
-	            .build();
-
-	        // 3. 包装进最终的方块实体数据
-	        CompoundTag nbt = CompoundTagBuilder.create()
-	            .put("profile", profile) // 注意：1.21 中很多字段改为了小写
-	            .build();
-
-	        // 4. 应用到方块
-	        BaseBlock skullBlock = BlockTypes.PLAYER_HEAD.getDefaultState().toBaseBlock(nbt);
-	        editSession.setBlock(BlockVector3.at(loc.getX(), loc.getY(), loc.getZ()), skullBlock);
-	    }
-	}
+        Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
+            try {
+                PlayerSkin skin = PlayerSkin.fromURL(skinUrl);
+                skinCache.put(skinUrl, skin);
+                //Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
+                PlayerHead.setSkin(block, skin, sendBlockUpdate);
+                //});
+                    
+                
+            } catch (Exception e) {
+            	e.printStackTrace();
+                // 异常时使用默认皮肤
+            	/*
+                Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> 
+                    PlayerHead.setSkin(block, PlayerSkin.getDefaultSkin(), false)
+                );
+                */
+            }
+        });
+    }
 
     @Override
     public void populate(@Nonnull World world, @Nonnull Random random, @Nonnull Chunk source) {
@@ -180,7 +172,7 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
                         PlayerTextures textures = profile.getTextures();
                         URL skin = textures.getSkin();
                         if (skin != null && block.getType() == Material.PLAYER_HEAD) {
-                        	setSkull121(block.getLocation(), skin.toString());
+                        	optimizedSetSkin(block, skin.toString(), false);
                         }
                     }
                 }
