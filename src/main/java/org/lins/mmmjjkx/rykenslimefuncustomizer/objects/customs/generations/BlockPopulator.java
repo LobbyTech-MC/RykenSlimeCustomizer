@@ -165,40 +165,19 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
                         }
                     }
                 }
-            });
-
-            		
-            		
-            
-
-            
-            Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
-            	try {
-            		BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
-
-            		Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
-
-                		if (controller.getBlockData(location) != null) {
-                		    controller.removeBlock(location);
-                		}
-                		if (location.getBlock().getType() != Material.AIR) {
-                			location.getBlock().setType(Material.AIR, false);
-                		}
-            		});
-            		
-                		
-            		if (location.getBlock().getType() == Material.AIR && controller.getBlockData(location) == null) {
-            			controller.createBlock(location, generationInfo.getSlimefunItemStack().getItemId());
-            		}
-
-                	
-            	} catch  (IllegalStateException e) {
-        			e.printStackTrace();
+                
+                BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
+                
+                if (controller.getBlockData(location) != null) {
+        		    controller.removeBlock(location);
         		}
-            	
-            	
+                
+                if (controller.getBlockData(location) == null) {
+        			controller.createBlock(location, slimefunItemStack.getItemId());
+        		}
             });
-            
+
+            		
 
             r = random.nextInt(0, 3);
             if (r == 0) {
