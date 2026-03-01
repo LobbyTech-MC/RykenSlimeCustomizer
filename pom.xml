@@ -231,7 +231,7 @@
             <version>5.3.27</version>
         </dependency>
         
-         <!-- FAWE 核心 API -->
+        <!-- FAWE 核心 API -->
         <dependency>
             <groupId>com.fastasyncworldedit</groupId>
             <artifactId>FastAsyncWorldEdit-Core</artifactId>
