@@ -1,6 +1,8 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.generations;
 
 import java.net.URL;
+import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,12 +23,24 @@ import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.ProjectAddon;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.Range;
 
 import com.destroystokyo.paper.profile.PlayerProfile;
+import com.sk89q.jnbt.CompoundTag;
+import com.sk89q.jnbt.CompoundTagBuilder;
+import com.sk89q.jnbt.IntArrayTag;
+import com.sk89q.jnbt.ListTag;
+import com.sk89q.jnbt.StringTag;
+import com.sk89q.worldedit.EditSession;
+import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.world.block.BaseBlock;
+import com.sk89q.worldedit.world.block.BlockTypes;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.BlockDataController;
 
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.skins.PlayerHead;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.skins.PlayerSkin;
+
 
 public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
     private static final List<String> blockedWorlds = List.of(
@@ -51,31 +65,40 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             "corporate_dimension",
             "logispace");
 	private static Map<String, PlayerSkin> skinCache = new HashMap<>();
-	
-	public static void optimizedSetSkin(Block block, String skinUrl, Boolean sendBlockUpdate) {
-        if (!skinCache.isEmpty() && skinCache.containsKey(skinUrl)) {
-            PlayerHead.setSkin(block, skinCache.get(skinUrl), sendBlockUpdate);
-            return;
-        }
+	public static void setSkull121(Location loc, String textureUrl) {
+	    // 1. 构造 Base64 纹理
+	    String json = "{\"textures\":{\"SKIN\":{\"url\":\"" + textureUrl + "\"}}}";
+	    String base64 = Base64.getEncoder().encodeToString(json.getBytes());
 
-        Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
-            try {
-                PlayerSkin skin = PlayerSkin.fromURL(skinUrl);
-                skinCache.put(skinUrl, skin);
-                Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> 
-                    PlayerHead.setSkin(block, skin, sendBlockUpdate)
-                );
-            } catch (Exception e) {
-            	e.printStackTrace();
-                // 异常时使用默认皮肤
-            	/*
-                Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> 
-                    PlayerHead.setSkin(block, PlayerSkin.getDefaultSkin(), false)
-                );
-                */
-            }
-        });
-    }
+	    com.sk89q.worldedit.world.World weWorld = BukkitAdapter.adapt(loc.getWorld());
+
+	    try (EditSession editSession = WorldEdit.getInstance().newEditSession(weWorld)) {
+	        // 2. 构建符合 1.21 结构的 NBT (用于 Block Entity Data)
+	        // 1.21 中，头颅的属性结构嵌套在 profile 标签下
+	        CompoundTag textureValue = CompoundTagBuilder.create()
+	            .put("Value", new StringTag(base64))
+	            .build();
+
+	        ListTag texturesList = new ListTag(CompoundTag.class, Collections.singletonList(textureValue));
+	        CompoundTag properties = CompoundTagBuilder.create()
+	            .put("textures", texturesList)
+	            .build();
+
+	        CompoundTag profile = CompoundTagBuilder.create()
+	            .put("id", new IntArrayTag(new int[]{1, 2, 3, 4})) // 1.21 依然支持 IntArray UUID
+	            .put("properties", properties)
+	            .build();
+
+	        // 3. 包装进最终的方块实体数据
+	        CompoundTag nbt = CompoundTagBuilder.create()
+	            .put("profile", profile) // 注意：1.21 中很多字段改为了小写
+	            .build();
+
+	        // 4. 应用到方块
+	        BaseBlock skullBlock = BlockTypes.PLAYER_HEAD.getDefaultState().toBaseBlock(nbt);
+	        editSession.setBlock(BlockVector3.at(loc.getX(), loc.getY(), loc.getZ()), skullBlock);
+	    }
+	}
 
     @Override
     public void populate(@Nonnull World world, @Nonnull Random random, @Nonnull Chunk source) {
@@ -148,6 +171,7 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             SlimefunItemStack slimefunItemStack = generationInfo.getSlimefunItemStack();
 
             Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
+            	
             	block.setType(slimefunItemStack.getType(), false);
                 if (block.getType() == Material.PLAYER_HEAD && slimefunItemStack.getType() == Material.PLAYER_HEAD) {
                     SkullMeta meta = (SkullMeta) slimefunItemStack.getItemMeta();
@@ -155,8 +179,8 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
                     if (profile != null) {
                         PlayerTextures textures = profile.getTextures();
                         URL skin = textures.getSkin();
-                        if (skin != null) {
-                        	optimizedSetSkin(block, skin.toString(), false);
+                        if (skin != null && block.getType() == Material.PLAYER_HEAD) {
+                        	setSkull121(block.getLocation(), skin.toString());
                         }
                     }
                 }
@@ -171,11 +195,19 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             	try {
             		BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
 
-            		
-            		
-            		if (location.getBlock().getType() != Material.AIR) {
-               		    location.getBlock().setType(Material.AIR);
-           		    }
+            		// 1. 将 Bukkit 的 World 转为 WorldEdit 的 World
+            		com.sk89q.worldedit.world.World weWorld = BukkitAdapter.adapt(location.getWorld());
+            		// 2. 创建 EditSession（建议使用 try-with-resources 自动关闭并刷新队列）
+            		try (EditSession editSession = WorldEdit.getInstance().newEditSession(weWorld)) {
+            		    // 3. 设置方块 (坐标使用 BlockVector3)
+            		    BlockVector3 position = BlockVector3.at(location.getX(), location.getY(), location.getZ());
+            		    if (editSession.getBlock(position).getBlockType() != BlockTypes.AIR) {
+            		    	editSession.setBlock(position, BlockTypes.AIR); 
+            		    }
+            		    
+            		    
+            		    // 4. (可选) 如果不使用 try-with-resources，必须手动执行 editSession.close();
+            		}
             		
             		if (controller.getBlockData(location) != null) {
             		    controller.removeBlock(location);
