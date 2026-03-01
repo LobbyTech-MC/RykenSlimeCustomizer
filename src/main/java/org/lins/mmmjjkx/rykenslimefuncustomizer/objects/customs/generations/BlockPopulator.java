@@ -176,16 +176,16 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             	try {
             		BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
 
-            		
-            		if (location.getBlock().getType() != Material.AIR) {
-            			location.getBlock().setType(Material.AIR, false);
-            		}
-            		    
+            		Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
 
+                		if (controller.getBlockData(location) != null) {
+                		    controller.removeBlock(location);
+                		}
+                		if (location.getBlock().getType() != Material.AIR) {
+                			location.getBlock().setType(Material.AIR, false);
+                		}
+            		});
             		
-            		if (controller.getBlockData(location) != null) {
-            		    controller.removeBlock(location);
-            		}
                 		
             		if (location.getBlock().getType() == Material.AIR && controller.getBlockData(location) == null) {
             			controller.createBlock(location, generationInfo.getSlimefunItemStack().getItemId());
