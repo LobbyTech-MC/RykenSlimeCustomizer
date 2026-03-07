@@ -1,6 +1,5 @@
 package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.generations;
 
-import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,22 +13,31 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.bukkit.profile.PlayerTextures;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.RykenSlimefunCustomizer;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.ProjectAddon;
 import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.Range;
 
 import com.destroystokyo.paper.profile.PlayerProfile;
+import com.sk89q.worldedit.EditSession;
+import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.blocks.BaseItemStack;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.world.block.BaseBlock;
+import com.sk89q.worldedit.world.block.BlockType;
+import com.sk89q.worldedit.world.item.ItemType;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.BlockDataController;
 
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import io.github.thebusybiscuit.slimefun4.libraries.dough.skins.PlayerHead;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.skins.PlayerSkin;
 
 
+
 public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
+	
     private static final List<String> blockedWorlds = List.of(
             "CAsteroidBelt",
             "CMars",
@@ -52,34 +60,46 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             "corporate_dimension",
             "logispace");
 	private static Map<String, PlayerSkin> skinCache = new HashMap<>();
-	public static void optimizedSetSkin(Block block, String skinUrl, Boolean sendBlockUpdate) {
-		
-        if (!skinCache.isEmpty() && skinCache.containsKey(skinUrl)) {
-        	Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
-        		PlayerHead.setSkin(block, skinCache.get(skinUrl), sendBlockUpdate);
-            });
-            return;
-        }
+	
+	public static BaseBlock itemToBlock(BaseItemStack itemStack) {
+	    // 1. 获取物品类型并尝试转为方块类型
+	    ItemType itemType = itemStack.getType();
+	    BlockType blockType = itemType.getBlockType();
 
-        Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
-            try {
-                PlayerSkin skin = PlayerSkin.fromURL(skinUrl);
-                Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
-                    PlayerHead.setSkin(block, skin, sendBlockUpdate);
-                });
-                    
-                
-            } catch (Exception e) {
-            	e.printStackTrace();
-                // 异常时使用默认皮肤
-            	/*
-                Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> 
-                    PlayerHead.setSkin(block, PlayerSkin.getDefaultSkin(), false)
-                );
-                */
-            }
-        });
+	    if (blockType == null) {
+	        // 如果该物品不能作为方块放置（比如羽毛），返回空气或抛出异常
+	        return null; 
+	    }
+
+	    // 2. 创建 BaseBlock 实例
+	    // 使用该方块类型的默认状态
+	    BaseBlock block = blockType.getDefaultState().toBaseBlock();
+
+	    // 3. 同步 NBT 数据
+	    // 物品的 NBT 通常包含在方块放置后的 TileEntity 数据中
+	    if (itemStack.hasNbtData()) {
+	        block.setNbt(itemStack.getNbt());
+	    }
+
+	    return block;
+	}
+	
+	private static BaseItemStack createSkullBaseBlock(PlayerProfile profile) {
+        // 创建临时头颅物品获取NBT
+        ItemStack skullItem = new ItemStack(Material.PLAYER_HEAD);
+        SkullMeta meta = (SkullMeta) skullItem.getItemMeta();
+        
+        // 设置玩家皮肤配置
+        meta.setOwnerProfile(profile);
+        skullItem.setItemMeta(meta);
+        
+        // 转换为FAWE的BaseBlock
+        return BukkitAdapter.adapt(skullItem);
     }
+
+
+
+
 
     @Override
     public void populate(@Nonnull World world, @Nonnull Random random, @Nonnull Chunk source) {
@@ -138,55 +158,51 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
         int centerY = r;
         int centerZ = (chunkZ << 4) + random.nextInt(16);
 
-        for (int i = 0; i < area.getSize().getRandomBetween(random); i++) {
-            Location location = new Location(world, centerX, centerY, centerZ);
-            Block block = world.getBlockAt(centerX, centerY, centerZ);
-            if (!(centerX >= (chunkX << 4)
-                    && centerX < (chunkX << 4) + 16
-                    && centerZ >= (chunkZ << 4)
-                    && centerZ < (chunkZ << 4) + 16)) {
-                break;
-            }
-            if (block.getType() != area.getReplacement()) break;
-
-            SlimefunItemStack slimefunItemStack = generationInfo.getSlimefunItemStack();
-
-            Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
+        Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
+        	
+        	try (EditSession editSession = WorldEdit.getInstance().newEditSessionBuilder()
+                    .maxBlocks(-1)
+                    .fastMode(true)
+                    .build()) {
             	
-            	block.setType(slimefunItemStack.getType(), false);
-                if (block.getType() == Material.PLAYER_HEAD && slimefunItemStack.getType() == Material.PLAYER_HEAD) {
+                for (int i = 0; i < area.getSize().getRandomBetween(random); i++) {
+                    Location location = new Location(world, centerX, centerY, centerZ);
+                    Block block = world.getBlockAt(centerX, centerY, centerZ);
+                    if (!(centerX >= (chunkX << 4)
+                            && centerX < (chunkX << 4) + 16
+                            && centerZ >= (chunkZ << 4)
+                            && centerZ < (chunkZ << 4) + 16)) {
+                        break;
+                    }
+                    if (block.getType() != area.getReplacement()) break;
+    		    
+                    SlimefunItemStack slimefunItemStack = generationInfo.getSlimefunItemStack();
+    		    
+                    if (slimefunItemStack.getType() != Material.PLAYER_HEAD) break;
                     SkullMeta meta = (SkullMeta) slimefunItemStack.getItemMeta();
                     PlayerProfile profile = meta.getPlayerProfile();
-                    if (profile != null) {
-                        PlayerTextures textures = profile.getTextures();
-                        URL skin = textures.getSkin();
-                        if (skin != null) {
-                        	optimizedSetSkin(block, skin.toString(), false);
-                        }
+                    BaseBlock skullBlock = itemToBlock(createSkullBaseBlock(profile));
+                	BlockVector3 pos = BlockVector3.at(centerX, centerY, centerZ);
+                	editSession.setBlock(pos, skullBlock);
+                    	
+                    BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
+                    if (controller.getBlockData(location) != null) {
+                        controller.removeBlock(location);
+                	}
+                        
+                    if (controller.getBlockData(location) == null) {
+                		controller.createBlock(location, slimefunItemStack.getItemId());
                     }
                 }
-                
-                BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
-                
-                if (controller.getBlockData(location) != null) {
-        		    controller.removeBlock(location);
-        		}
-                
-                if (controller.getBlockData(location) == null) {
-        			controller.createBlock(location, slimefunItemStack.getItemId());
-        		}
-            });
-
-            		
-
-            r = random.nextInt(0, 3);
-            if (r == 0) {
-                centerX++;
-            } else if (r == 1) {
-                centerY++;
-            } else if (r == 2) {
-                centerZ++;
+                editSession.flushQueue();
+            } catch (Exception e) {
+                throw new RuntimeException("批量设置头颅失败", e);
             }
-        }
+        	
+        });
+        
     }
+                		
+		    
+                
 }
