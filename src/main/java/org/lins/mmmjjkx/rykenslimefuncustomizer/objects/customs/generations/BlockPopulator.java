@@ -133,7 +133,7 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
     	// 更新Slimefun数据库
         BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
         
-    	Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
+    	Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
     		Range height = area.getHeight();
             int h = height.getDistance() + 1;
             int r;
@@ -216,14 +216,11 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
     	                editSession.setBlock(pos, blockState);
     	            }
     	            
-    	            
-    	            synchronized (controller) { // 简单粗暴的同步锁，确保同一时间只有一个线程在操作 SF 数据库
-    	                if (controller.getBlockData(location) != null) {
-    	                    controller.removeBlock(location);
-    	                }
+    	           
+    	            if (controller.getBlockData(location) == null) {
     	                controller.createBlock(location, slimefunItemStack.getItemId());
     	            }
-                    
+    	                                    
                     r = random.nextInt(0, 3);
                     if (r == 0) {
                         centerX++;
