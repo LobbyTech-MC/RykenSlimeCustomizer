@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.Level;
 
 import javax.annotation.Nonnull;
 
@@ -101,23 +102,43 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
         if (blockedWorlds.contains(world.getName())) {
             return;
         }
+        
+        com.sk89q.worldedit.world.World faweworld = BukkitAdapter.adapt(world);
+        
+        try (EditSession editSession = WorldEdit.getInstance().newEditSessionBuilder()
+    			.world(faweworld)
+                .maxBlocks(-1)
+                .fastMode(true)
+                .build()) {
+        	
+        	
+        	List<ProjectAddon> addons = RykenSlimefunCustomizer.addonManager.getAllValues();
 
-        List<ProjectAddon> addons = RykenSlimefunCustomizer.addonManager.getAllValues();
+            for (ProjectAddon addon : addons) {
+                List<GenerationInfo> generationInfos = addon.getGenerationInfos();
 
-        for (ProjectAddon addon : addons) {
-            List<GenerationInfo> generationInfos = addon.getGenerationInfos();
+                for (GenerationInfo generationInfo : generationInfos) {
+                    List<GenerationArea> areas = generationInfo.getAreas();
 
-            for (GenerationInfo generationInfo : generationInfos) {
-                List<GenerationArea> areas = generationInfo.getAreas();
+                    for (GenerationArea area : areas) {
+                        if (area.getEnvironment() != world.getEnvironment()) continue;
 
-                for (GenerationArea area : areas) {
-                    if (area.getEnvironment() != world.getEnvironment()) continue;
-
-                    for (int i = 0; i < area.getAmount(); i++)
-                        generateNext(source.getX(), source.getZ(), world, random, generationInfo, area);
+                        for (int i = 0; i < area.getAmount(); i++)
+                            generateNext(source.getX(), source.getZ(), world, random, generationInfo, area, editSession);
+                    }
                 }
             }
+            
+            editSession.flushQueue();
+            //Bukkit.getLogger().log(Level.INFO, "批量设置头颅成功！");
+        	
+        } catch (Exception e) {
+        	e.printStackTrace();
+            throw new RuntimeException("批量设置头颅失败", e);
         }
+
+        
+        
     }
 
     
@@ -128,12 +149,13 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             @Nonnull World world,
             @Nonnull Random random,
             @Nonnull GenerationInfo generationInfo,
-            @Nonnull GenerationArea area) {
+            @Nonnull GenerationArea area,
+            EditSession editSession) {
     	
     	// 更新Slimefun数据库
         BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
         
-    	Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
+    	Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
     		Range height = area.getHeight();
             int h = height.getDistance() + 1;
             int r;
@@ -159,26 +181,18 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             int centerZ = (chunkZ << 4) + random.nextInt(16);
             
             
-            com.sk89q.worldedit.world.World faweworld = BukkitAdapter.adapt(world);
-        	//EditSession editSession = WorldEdit.getInstance().newEditSession(faweworld);
-        	try (EditSession editSession = WorldEdit.getInstance().newEditSessionBuilder()
-        			.world(faweworld)
-                    .maxBlocks(-1)
-                    .fastMode(true)
-                    .build()) {
-        		
-        		// 在设置方块之前，禁用光照同步
-        	    //editSession.setReorderMode(EditSession.ReorderMode.MULTI_STAGE);
-            	
         		for (int i = 0; i < area.getSize().getRandomBetween(random); i++) {
     	            Location location = new Location(world, centerX, centerY, centerZ);
     	            Block block = world.getBlockAt(centerX, centerY, centerZ);
 
-    	            if (centerX < (chunkX << 4) || centerX >= (chunkX << 4) + 16 || 
-    	            	    centerZ < (chunkZ << 4) || centerZ >= (chunkZ << 4) + 16) {
-    	            	    continue; // 不要跨区块操作，除非你确定相邻区块已加载
+    	            if (!(centerX >= (chunkX << 4)
+    	                    && centerX < (chunkX << 4) + 16
+    	                    && centerZ >= (chunkZ << 4)
+    	                    && centerZ < (chunkZ << 4) + 16)) {
+    	                break;
     	            }
     	            if (block.getType() != area.getReplacement()) break;
+    	            if (controller.getBlockData(location) != null) break;
     	        
     	            SlimefunItemStack slimefunItemStack = generationInfo.getSlimefunItemStack();
     	        
@@ -216,11 +230,13 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
     	                editSession.setBlock(pos, blockState);
     	            }
     	            
-    	           
-    	            if (controller.getBlockData(location) == null) {
-    	                controller.createBlock(location, slimefunItemStack.getItemId());
+    	            synchronized (controller) {
+    	            	if (controller.getBlockData(location) == null) {
+        	                controller.createBlock(location, generationInfo.getSlimefunItemStack().getItemId());
+        	            }
     	            }
-    	                                    
+    	            
+    	            //Bukkit.getLogger().log(Level.INFO, "X:" + centerX + " Y:" + centerY + " Z:" + centerZ);                        
                     r = random.nextInt(0, 3);
                     if (r == 0) {
                         centerX++;
@@ -230,11 +246,9 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
                         centerZ++;
                     }
                 }
-                editSession.flushQueue();
-            } catch (Exception e) {
-            	e.printStackTrace();
-                throw new RuntimeException("批量设置头颅失败", e);
-            }
+                
+                
+            
     		
     	});
     	
