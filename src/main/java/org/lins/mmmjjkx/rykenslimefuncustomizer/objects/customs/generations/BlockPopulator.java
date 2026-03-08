@@ -164,11 +164,11 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
         	try (EditSession editSession = WorldEdit.getInstance().newEditSessionBuilder()
         			.world(faweworld)
                     .maxBlocks(-1)
-                    .fastMode(true)
+                    //.fastMode(true)
                     .build()) {
         		
         		// 在设置方块之前，禁用光照同步
-        	    editSession.setReorderMode(EditSession.ReorderMode.MULTI_STAGE);
+        	    //editSession.setReorderMode(EditSession.ReorderMode.MULTI_STAGE);
             	
         		for (int i = 0; i < area.getSize().getRandomBetween(random); i++) {
     	            Location location = new Location(world, centerX, centerY, centerZ);
