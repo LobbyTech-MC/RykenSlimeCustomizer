@@ -133,7 +133,7 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
     	// 更新Slimefun数据库
         BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
         
-    	Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
+    	Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
     		Range height = area.getHeight();
             int h = height.getDistance() + 1;
             int r;
@@ -164,7 +164,7 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
         	try (EditSession editSession = WorldEdit.getInstance().newEditSessionBuilder()
         			.world(faweworld)
                     .maxBlocks(-1)
-                    //.fastMode(true)
+                    .fastMode(true)
                     .build()) {
         		
         		// 在设置方块之前，禁用光照同步
@@ -173,6 +173,7 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
         		for (int i = 0; i < area.getSize().getRandomBetween(random); i++) {
     	            Location location = new Location(world, centerX, centerY, centerZ);
     	            Block block = world.getBlockAt(centerX, centerY, centerZ);
+
     	            if (centerX < (chunkX << 4) || centerX >= (chunkX << 4) + 16 || 
     	            	    centerZ < (chunkZ << 4) || centerZ >= (chunkZ << 4) + 16) {
     	            	    continue; // 不要跨区块操作，除非你确定相邻区块已加载
