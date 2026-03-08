@@ -129,7 +129,7 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             @Nonnull Random random,
             @Nonnull GenerationInfo generationInfo,
             @Nonnull GenerationArea area) {
-    	Bukkit.getScheduler().runTaskAsynchronously(RykenSlimefunCustomizer.INSTANCE, () -> {
+    	Bukkit.getScheduler().runTask(RykenSlimefunCustomizer.INSTANCE, () -> {
     		Range height = area.getHeight();
             int h = height.getDistance() + 1;
             int r;
@@ -209,10 +209,13 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
     	            
     	            // 更新Slimefun数据库
     	            BlockDataController controller = Slimefun.getDatabaseManager().getBlockDataController();
-    	            if (controller.getBlockData(location) != null) {
-    	                controller.removeBlock(location);
+    	            //if (controller.getBlockData(location) != null) {
+    	            //    controller.removeBlock(location);
+    	            //}
+    	            if (controller.getBlockData(location) == null) {
+    	            	controller.createBlock(location, slimefunItemStack.getItemId());
     	            }
-    	            controller.createBlock(location, slimefunItemStack.getItemId());
+    	            
                     
                     r = random.nextInt(0, 3);
                     if (r == 0) {
