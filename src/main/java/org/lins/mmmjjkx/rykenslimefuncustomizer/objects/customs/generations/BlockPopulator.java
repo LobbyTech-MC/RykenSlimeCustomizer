@@ -3,6 +3,7 @@ package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.generations;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 import javax.annotation.Nonnull;
 
@@ -171,17 +172,24 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
     	                    if (texture != null) {
     	                        // 使用FAWE的NBT构建方式
     	                    	// 1.21.1 正确的 NBT 结构
-    	                        CompoundTag nbt = new CompoundTag(Map.of(
-    	                            "profile", new CompoundTag(Map.of(
-    	                                "id", new IntArrayTag(new int[]{0, 0, 0, 0}), // UUID的整数数组
-    	                                "properties", new ListTag(CompoundTag.class, List.of(
-    	                                    new CompoundTag(Map.of(
-    	                                        "name", new StringTag("textures"),
-    	                                        "value", new StringTag(texture)
+    	                    	com.sk89q.jnbt.CompoundTag nbt = new com.sk89q.jnbt.CompoundTag(Map.of(
+    	                                "profile", new com.sk89q.jnbt.CompoundTag(Map.of(
+    	                                    // 生成一个随机UUID，使用IntArrayTag表示
+    	                                    "id", new IntArrayTag(new int[]{
+    	                                        UUID.randomUUID().hashCode(),
+    	                                        UUID.randomUUID().hashCode(),
+    	                                        UUID.randomUUID().hashCode(),
+    	                                        UUID.randomUUID().hashCode()
+    	                                    }),
+    	                                    "properties", new ListTag(com.sk89q.jnbt.CompoundTag.class, List.of(
+    	                                        new com.sk89q.jnbt.CompoundTag(Map.of(
+    	                                            "name", new StringTag("textures"),
+    	                                            "value", new StringTag(texture)
+    	                                            // 注意：1.21.1中通常不需要 signature，除非你处理的是正版玩家的签名数据
+    	                                        ))
     	                                    ))
     	                                ))
-    	                            ))
-    	                        ));
+    	                            ));
     	                        
     	                        // 创建带NBT的BaseBlock
     	                        
