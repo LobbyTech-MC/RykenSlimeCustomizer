@@ -3,7 +3,6 @@ package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.generations;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.UUID;
 
 import javax.annotation.Nonnull;
 
