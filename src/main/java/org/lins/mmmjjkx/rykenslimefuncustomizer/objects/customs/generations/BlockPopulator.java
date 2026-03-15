@@ -24,14 +24,11 @@ import com.sk89q.jnbt.ListTag;
 import com.sk89q.jnbt.StringTag;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEdit;
-import com.sk89q.worldedit.blocks.BaseItemStack;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
-import com.sk89q.worldedit.world.block.BlockType;
 import com.sk89q.worldedit.world.block.BlockTypes;
-import com.sk89q.worldedit.world.item.ItemType;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.BlockDataController;
 
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -63,33 +60,6 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
             "corporate_dimension",
             "logispace");
 	
-	public static BaseBlock itemToBlock(BaseItemStack itemStack) {
-	    // 1. 获取物品类型并尝试转为方块类型
-	    ItemType itemType = itemStack.getType();
-	    BlockType blockType = itemType.getBlockType();
-
-	    if (blockType == null) {
-	        // 如果该物品不能作为方块放置（比如羽毛），返回空气或抛出异常
-	        return null; 
-	    }
-
-	    // 2. 创建 BaseBlock 实例
-	    // 使用该方块类型的默认状态
-	    BaseBlock block = blockType.getDefaultState().toBaseBlock();
-
-	    // 3. 同步 NBT 数据
-	    // 物品的 NBT 通常包含在方块放置后的 TileEntity 数据中
-	    if (itemStack.hasNbtData()) {
-	        block.setNbt(itemStack.getNbt());
-	    }
-
-	    return block;
-	}
-	
-
-
-
-
 
 
     @Override
