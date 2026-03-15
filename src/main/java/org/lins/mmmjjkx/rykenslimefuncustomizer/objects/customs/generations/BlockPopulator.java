@@ -2,6 +2,7 @@ package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.generations;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 
 import javax.annotation.Nonnull;
@@ -31,6 +32,7 @@ import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockTypes;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.BlockDataController;
 
+import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 
@@ -195,9 +197,19 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
     	                editSession.setBlock(pos, blockState);
     	            }
     	            
+    	            /*
+                     * Fix: There already a block in this location.
+                     */
+    	            
     	            synchronized (controller) {
     	            	if (controller.getBlockData(location) == null) {
-        	                controller.createBlock(location, generationInfo.getSlimefunItemStack().getItemId());
+
+                            
+                            try {
+                            	controller.createBlock(location, slimefunItemStack.getItemId());
+                            } catch (IllegalStateException illegalStateException) {
+                                // ignore
+                            }
         	            }
     	            }
     	            
