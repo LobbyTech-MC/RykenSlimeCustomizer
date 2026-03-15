@@ -3,6 +3,7 @@ package org.lins.mmmjjkx.rykenslimefuncustomizer.objects.customs.generations;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 import javax.annotation.Nonnull;
 
@@ -20,6 +21,7 @@ import org.lins.mmmjjkx.rykenslimefuncustomizer.objects.Range;
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
 import com.sk89q.jnbt.CompoundTag;
+import com.sk89q.jnbt.IntArrayTag;
 import com.sk89q.jnbt.ListTag;
 import com.sk89q.jnbt.StringTag;
 import com.sk89q.worldedit.EditSession;
@@ -169,12 +171,14 @@ public class BlockPopulator extends org.bukkit.generator.BlockPopulator {
     	                    String texture = getTexture(profile);
     	                    if (texture != null) {
     	                        // 使用FAWE的NBT构建方式
+    	                    	// 1.21.1 正确的 NBT 结构
     	                        CompoundTag nbt = new CompoundTag(Map.of(
-    	                            "Id", new StringTag("minecraft:player_head"),
-    	                            "Properties", new CompoundTag(Map.of(
-    	                                "textures", new ListTag(CompoundTag.class, List.of(
+    	                            "profile", new CompoundTag(Map.of(
+    	                                "id", new IntArrayTag(new int[]{0, 0, 0, 0}), // UUID的整数数组
+    	                                "properties", new ListTag(CompoundTag.class, List.of(
     	                                    new CompoundTag(Map.of(
-    	                                        "Value", new StringTag(texture)
+    	                                        "name", new StringTag("textures"),
+    	                                        "value", new StringTag(texture)
     	                                    ))
     	                                ))
     	                            ))
